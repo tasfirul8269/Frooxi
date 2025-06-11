@@ -1,0 +1,40 @@
+@keyframes marquee-normal {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); } /* For content moving left */
+}
+.animate-marquee-normal {
+  animation: marquee-normal 40s linear infinite;
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(-100%); } /* Start from further left for reverse */
+  100% { transform: translateX(0%); }    /* For content moving right */
+}
+.animate-marquee-reverse {
+  animation: marquee-reverse 40s linear infinite;
+}
+
+/* Vertical Marquee Animations */
+@keyframes marquee-vertical-normal {
+  0% { transform: translateY(0%); }
+  100% { transform: translateY(-100%); } /* Content moving up */
+}
+
+.animate-marquee-vertical-normal {
+  animation: marquee-vertical-normal 60s linear infinite;
+}
+
+@keyframes marquee-vertical-reverse {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(0%); }    /* Content moving down */
+}
+
+.animate-marquee-vertical-reverse {
+  animation: marquee-vertical-reverse 60s linear infinite;
+}
+
+/* Pause vertical marquee on hover of its container */
+.portfolio-marquee-container:hover .animate-marquee-vertical-normal,
+.portfolio-marquee-container:hover .animate-marquee-vertical-reverse {
+  animation-play-state: paused;
+}

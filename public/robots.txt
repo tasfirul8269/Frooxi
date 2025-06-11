@@ -1,0 +1,41 @@
+# Default rule for all robots
+User-agent: *
+Allow: /
+Disallow: /private/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /*?*
+Disallow: /*.js$
+Disallow: /*.css$
+Disallow: /*.json$
+
+# Specific bot rules
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+# Sitemap
+Sitemap: https://frooxi.com/sitemap.xml
+
+# Crawl-delay: 10
+
+# Allow all robots to access these files
+Allow: /public/
+Allow: /assets/
+Allow: /images/
+
+# Block specific files
+Disallow: /package.json
+Disallow: /yarn.lock
+Disallow: /package-lock.json
+
+User-agent: *
+Allow: /
