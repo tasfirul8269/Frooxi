@@ -1,138 +1,170 @@
-import React, { useEffect, useState } from 'react';
-import AdminLayout from '../../../components/admin/AdminLayout';
-import { Link } from 'react-router-dom';
-import { getToken } from '../../../lib/auth';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import api from '@/services/api';
 
-interface PortfolioItem {
+interface Portfolio {
   _id: string;
   title: string;
+  description: string;
+  image: string;
   category: string;
-  imageUrl: string;
+  technologies: string[];
+  link: string;
+  createdAt: string;
 }
 
-const AdminPortfolioList: React.FC = () => {
-  const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
+const AdminPortfolioList = () => {
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const fetchPortfolios = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get('/portfolio');
+      // Ensure we're getting an array of portfolios
+      const data = Array.isArray(response.data) ? response.data : [];
+      setPortfolios(data);
+    } catch (err) {
+      console.error('Error fetching portfolios:', err);
+      setError('Failed to fetch portfolios. Please try again later.');
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch portfolios',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPortfolios = async () => {
-      try {
-        const token = getToken();
-        if (!token) {
-          setError('Authentication token not found. Please log in.');
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch('/api/portfolio', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setPortfolios(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPortfolios();
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this portfolio item?')) {
-      try {
-        const token = getToken();
-        if (!token) {
-          setError('Authentication token not found. Please log in.');
-          return;
-        }
+    if (!window.confirm('Are you sure you want to delete this portfolio item?')) {
+      return;
+    }
 
-        const response = await fetch(`/api/portfolios/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        setPortfolios(portfolios.filter((p) => p._id !== id));
-      } catch (err: any) {
-        setError(err.message);
-      }
+    try {
+      await api.delete(`/portfolio/${id}`);
+      toast({
+        title: 'Success',
+        description: 'Portfolio item deleted successfully',
+      });
+      fetchPortfolios(); // Refresh the list
+    } catch (err) {
+      console.error('Error deleting portfolio:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete portfolio item',
+        variant: 'destructive',
+      });
     }
   };
 
   if (loading) {
-    return <AdminLayout><div>Loading portfolios...</div></AdminLayout>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <AdminLayout><div className="text-red-500">Error: {error}</div></AdminLayout>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-destructive">{error}</p>
+        <Button onClick={fetchPortfolios}>Try Again</Button>
+      </div>
+    );
   }
 
   return (
-    <AdminLayout>
-      <h2 className="text-3xl font-bold mb-6">Manage Portfolios</h2>
-      <Link
-        to="/admin/portfolios/new"
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block"
-      >
-        Add New Portfolio
-      </Link>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        {portfolios.length === 0 ? (
-          <p>No portfolios found.</p>
-        ) : (
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">Image</th>
-                <th className="py-2 px-4 border-b">Title</th>
-                <th className="py-2 px-4 border-b">Category</th>
-                <th className="py-2 px-4 border-b">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {portfolios.map((portfolio) => (
-                <tr key={portfolio._id}>
-                  <td className="py-2 px-4 border-b">
-                    <img src={portfolio.imageUrl} alt={portfolio.title} className="w-16 h-16 object-cover rounded" />
-                  </td>
-                  <td className="py-2 px-4 border-b">{portfolio.title}</td>
-                  <td className="py-2 px-4 border-b">{portfolio.category}</td>
-                  <td className="py-2 px-4 border-b">
-                    <Link
-                      to={`/admin/portfolios/edit/${portfolio._id}`}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm mr-2"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(portfolio._id)}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Portfolio Management</h1>
+        <Button onClick={() => navigate('/admin/portfolios/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add New Portfolio
+        </Button>
       </div>
-    </AdminLayout>
+
+      {portfolios.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <p className="text-muted-foreground mb-4">No portfolio items found</p>
+            <Button onClick={() => navigate('/admin/portfolios/new')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your First Portfolio
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {portfolios.map((portfolio) => (
+            <Card key={portfolio._id} className="overflow-hidden">
+              <div className="aspect-video relative">
+                <img
+                  src={portfolio.image}
+                  alt={portfolio.title}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <CardHeader>
+                <CardTitle className="line-clamp-1">{portfolio.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                  {portfolio.description}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {portfolio.technologies.map((tech, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => navigate(`/admin/portfolios/${portfolio._id}`)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => navigate(`/admin/portfolios/edit/${portfolio._id}`)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleDelete(portfolio._id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

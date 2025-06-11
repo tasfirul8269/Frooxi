@@ -29,7 +29,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface AdminPortfolioFormProps {
-  initialData?: FormData & { _id?: string };
+  initialData?: FormData;
   isEditing?: boolean;
 }
 
@@ -41,10 +41,10 @@ const AdminPortfolioForm = ({ initialData, isEditing = false }: AdminPortfolioFo
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-    title: '',
-    description: '',
+      title: '',
+      description: '',
       image: '',
-    category: '',
+      category: '',
       technologies: '',
       link: '',
     },
@@ -52,13 +52,13 @@ const AdminPortfolioForm = ({ initialData, isEditing = false }: AdminPortfolioFo
 
   const onSubmit = async (data: FormData) => {
     try {
-        setLoading(true);
+      setLoading(true);
       const formattedData = {
         ...data,
         technologies: data.technologies.split(',').map(tech => tech.trim()),
       };
 
-      if (isEditing && initialData?._id) {
+      if (isEditing && initialData) {
         await api.put(`/portfolio/${initialData._id}`, formattedData);
         toast({
           title: 'Success',
@@ -76,7 +76,7 @@ const AdminPortfolioForm = ({ initialData, isEditing = false }: AdminPortfolioFo
       console.error('Error saving portfolio:', error);
       toast({
         title: 'Error',
-        description: error.response?.data?.msg || 'Failed to save portfolio',
+        description: 'Failed to save portfolio',
         variant: 'destructive',
       });
     } finally {
@@ -185,20 +185,20 @@ const AdminPortfolioForm = ({ initialData, isEditing = false }: AdminPortfolioFo
 
           <div className="flex justify-end gap-4">
             <Button
-            type="button"
+              type="button"
               variant="outline"
-            onClick={() => navigate('/admin/portfolios')}
-          >
-            Cancel
+              onClick={() => navigate('/admin/portfolios')}
+            >
+              Cancel
             </Button>
             <Button type="submit" disabled={loading}>
               {loading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
             </Button>
-        </div>
-      </form>
+          </div>
+        </form>
       </Form>
     </div>
   );
 };
 
-export default AdminPortfolioForm;
+export default AdminPortfolioForm; 

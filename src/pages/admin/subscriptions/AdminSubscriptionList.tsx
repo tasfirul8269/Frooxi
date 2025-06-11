@@ -1,139 +1,154 @@
-import React, { useEffect, useState } from 'react';
-import AdminLayout from '../../../components/admin/AdminLayout';
-import { Link } from 'react-router-dom';
-import { getToken } from '../../../lib/auth';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import api from '@/services/api';
 
-interface SubscriptionPlan {
+interface Subscription {
   _id: string;
   name: string;
+  description: string;
   price: number;
-  duration: string;
+  duration: number;
   features: string[];
+  isActive: boolean;
 }
 
 const AdminSubscriptionList: React.FC = () => {
-  const [subscriptions, setSubscriptions] = useState<SubscriptionPlan[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await api.get('/subscriptions');
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+      console.log('Data type:', typeof response.data);
+      console.log('Is Array?', Array.isArray(response.data));
+      
+      // Ensure response.data is an array
+      const data = Array.isArray(response.data) ? response.data : [];
+      console.log('Processed data:', data);
+      setSubscriptions(data);
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch subscriptions',
+        variant: 'destructive',
+      });
+      setSubscriptions([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSubscriptions = async () => {
-      try {
-        const token = getToken();
-        if (!token) {
-          setError('Authentication token not found. Please log in.');
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch('/api/subscription', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setSubscriptions(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSubscriptions();
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this subscription plan?')) {
-      try {
-        const token = getToken();
-        if (!token) {
-          setError('Authentication token not found. Please log in.');
-          return;
-        }
+    if (!window.confirm('Are you sure you want to delete this subscription plan?')) {
+      return;
+    }
 
-        const response = await fetch(`/api/subscriptions/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        setSubscriptions(subscriptions.filter((s) => s._id !== id));
-      } catch (err: any) {
-        setError(err.message);
-      }
+    try {
+      await api.delete(`/subscriptions/${id}`);
+      toast({
+        title: 'Success',
+        description: 'Subscription plan deleted successfully',
+      });
+      fetchSubscriptions();
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete subscription plan',
+        variant: 'destructive',
+      });
     }
   };
 
   if (loading) {
-    return <AdminLayout><div>Loading subscriptions...</div></AdminLayout>;
-  }
-
-  if (error) {
-    return <AdminLayout><div className="text-red-500">Error: {error}</div></AdminLayout>;
+    return <div>Loading...</div>;
   }
 
   return (
-    <AdminLayout>
-      <h2 className="text-3xl font-bold mb-6">Manage Subscriptions</h2>
-      <Link
-        to="/admin/subscriptions/new"
-        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4 inline-block"
-      >
-        Add New Subscription
-      </Link>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        {subscriptions.length === 0 ? (
-          <p>No subscriptions found.</p>
-        ) : (
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">Name</th>
-                <th className="py-2 px-4 border-b">Price</th>
-                <th className="py-2 px-4 border-b">Duration</th>
-                <th className="py-2 px-4 border-b">Features</th>
-                <th className="py-2 px-4 border-b">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscriptions.map((subscription) => (
-                <tr key={subscription._id}>
-                  <td className="py-2 px-4 border-b">{subscription.name}</td>
-                  <td className="py-2 px-4 border-b">${subscription.price}</td>
-                  <td className="py-2 px-4 border-b">{subscription.duration}</td>
-                  <td className="py-2 px-4 border-b">{subscription.features.join(', ')}</td>
-                  <td className="py-2 px-4 border-b">
-                    <Link
-                      to={`/admin/subscriptions/edit/${subscription._id}`}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm mr-2"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(subscription._id)}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Subscription Plans</h1>
+        <Button onClick={() => navigate('/admin/subscriptions/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add New Plan
+        </Button>
       </div>
-    </AdminLayout>
+
+      {subscriptions.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No subscription plans found.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {subscriptions.map((subscription) => (
+            <Card key={subscription._id}>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                  <span>{subscription.name}</span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigate(`/admin/subscriptions/edit/${subscription._id}`)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(subscription._id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500">{subscription.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold">${subscription.price}</span>
+                    <span className="text-sm text-gray-500">{subscription.duration} days</span>
+                  </div>
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Features:</h4>
+                    <ul className="list-disc list-inside space-y-1">
+                      {subscription.features.map((feature, index) => (
+                        <li key={index} className="text-sm">{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-4">
+                    <span
+                      className={`inline-block px-2 py-1 rounded-full text-xs ${
+                        subscription.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {subscription.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

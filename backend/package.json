@@ -2,11 +2,12 @@
   "name": "frooxi-backend",
   "version": "1.0.0",
   "description": "Backend API for Frooxi IT Services",
-  "main": "server.cjs",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.cjs",
-    "dev": "nodemon server.cjs",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "setup": "node setup.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

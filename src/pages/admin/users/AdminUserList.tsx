@@ -1,223 +1,168 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import AdminLayout from '../../../components/admin/AdminLayout';
-import { getToken } from '../../../lib/auth';
-import { useNavigate } from 'react-router-dom';
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Shield, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
+import api from '@/services/api';
 
 interface User {
   _id: string;
-  username: string;
+  name: string;
   email: string;
-  role: string;
+  role: 'user' | 'admin';
+  isActive: boolean;
+  createdAt: string;
 }
 
 const AdminUserList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const { toast } = useToast();
 
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [registerError, setRegisterError] = useState<string | null>(null);
-  const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
-
-  const navigate = useNavigate();
-
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = async () => {
     try {
-      const token = getToken();
-      if (!token) {
-        setError('Authentication token not found. Please log in.');
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch('/api/user', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const response = await api.get('/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch users',
+        variant: 'destructive',
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setUsers(data);
-    } catch (err: any) {
-      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        const token = getToken();
-        if (!token) {
-          setError('Authentication token not found. Please log in.');
-          return;
-        }
+  const handleToggleRole = async (userId: string, currentRole: string) => {
+    try {
+      const newRole = currentRole === 'admin' ? 'user' : 'admin';
+      await api.put(`/users/${userId}/role`, { role: newRole });
+      toast({
+        title: 'Success',
+        description: `User role updated to ${newRole}`,
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user role',
+        variant: 'destructive',
+      });
+    }
+  };
 
-        const response = await fetch(`/api/user/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        setUsers(users.filter((user) => user._id !== id));
-      } catch (err: any) {
-        setError(err.message);
-      }
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      await api.put(`/users/${userId}/status`, { isActive: !currentStatus });
+      toast({
+        title: 'Success',
+        description: `User ${currentStatus ? 'deactivated' : 'activated'} successfully`,
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user status',
+        variant: 'destructive',
+      });
     }
   };
 
   if (loading) {
-    return <AdminLayout><div>Loading users...</div></AdminLayout>;
+    return <div>Loading...</div>;
   }
-
-  if (error) {
-    return <AdminLayout><div className="text-red-500">Error: {error}</div></AdminLayout>;
-  }
-
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRegisterError(null);
-    setRegisterSuccess(null);
-
-    try {
-      const response = await fetch('/api/users/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password, role: 'admin' }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      setRegisterSuccess('Admin user registered successfully!');
-      setUsername('');
-      setEmail('');
-      setPassword('');
-      setShowAddUserForm(false); // Hide form after successful registration
-      fetchUsers(); // Refresh the user list
-    } catch (err: any) {
-      setRegisterError(err.message);
-    }
-  };
 
   return (
-    <AdminLayout>
-      <h2 className="text-3xl font-bold mb-6">Manage Users</h2>
-      <Button onClick={() => setShowAddUserForm(!showAddUserForm)} className="mb-4">
-        {showAddUserForm ? 'Hide Add Admin Form' : 'Add New Admin'}
-      </Button>
-
-      {showAddUserForm && (
-        <Card className="w-full max-w-md mx-auto mb-6">
-          <CardHeader>
-            <CardTitle>Add New Admin User</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Admin Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {registerError && <p className="text-red-500 text-sm">{registerError}</p>}
-              {registerSuccess && <p className="text-green-500 text-sm">{registerSuccess}</p>}
-              <Button type="submit" className="w-full">
-                Register Admin
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        {users.length === 0 ? (
-          <p>No users found.</p>
-        ) : (
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b">Username</th>
-                <th className="py-2 px-4 border-b">Email</th>
-                <th className="py-2 px-4 border-b">Role</th>
-                <th className="py-2 px-4 border-b">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user._id}>
-                  <td className="py-2 px-4 border-b">{user.username}</td>
-                  <td className="py-2 px-4 border-b">{user.email}</td>
-                  <td className="py-2 px-4 border-b">{user.role}</td>
-                  <td className="py-2 px-4 border-b">
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Users</h1>
       </div>
-    </AdminLayout>
+
+      {users.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No users found.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {users.map((user) => (
+            <Card key={user._id}>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                  <span>{user.name}</span>
+                  <Badge
+                    variant={user.role === 'admin' ? 'default' : 'secondary'}
+                    className="flex items-center gap-1"
+                  >
+                    {user.role === 'admin' ? (
+                      <ShieldCheck className="h-4 w-4" />
+                    ) : (
+                      <Shield className="h-4 w-4" />
+                    )}
+                    {user.role}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500">Email:</span>
+                    <span className="text-sm">{user.email}</span>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500">Joined:</span>
+                    <span className="text-sm">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500">Status:</span>
+                    <Badge
+                      variant={user.isActive ? 'success' : 'destructive'}
+                      className="flex items-center gap-1"
+                    >
+                      {user.isActive ? (
+                        <ShieldCheck className="h-4 w-4" />
+                      ) : (
+                        <ShieldX className="h-4 w-4" />
+                      )}
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleRole(user._id, user.role)}
+                    >
+                      {user.role === 'admin' ? 'Make User' : 'Make Admin'}
+                    </Button>
+                    <Button
+                      variant={user.isActive ? 'destructive' : 'default'}
+                      size="sm"
+                      onClick={() => handleToggleStatus(user._id, user.isActive)}
+                    >
+                      {user.isActive ? 'Deactivate' : 'Activate'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
