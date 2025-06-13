@@ -12,17 +12,23 @@ const subscriptionSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: true
+    required: true,
+    min: 0
   },
   duration: {
     type: Number,
     required: true,
-    default: 30 // Duration in days
+    min: 1,
+    comment: 'Duration in months'
   },
   features: [{
     type: String,
-    required: true
+    trim: true
   }],
+  isPopular: {
+    type: Boolean,
+    default: false
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -30,9 +36,17 @@ const subscriptionSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
-const Subscription = mongoose.model('Subscription', subscriptionSchema);
+// Update the updatedAt timestamp before saving
+subscriptionSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-export default Subscription; 
+export default mongoose.model('Subscription', subscriptionSchema); 

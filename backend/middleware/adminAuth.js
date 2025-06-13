@@ -1,9 +1,6 @@
-const adminAuth = (req, res, next) => {
-  // Check if user exists and has admin role
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ msg: 'Access denied. Admin privileges required.' });
+export default function adminAuth(req, res, next) {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
   next();
-};
-
-export default adminAuth; 
+} 

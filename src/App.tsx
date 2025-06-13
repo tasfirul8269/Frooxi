@@ -14,18 +14,7 @@ import Company from "./pages/Company";
 import Contact from "./pages/Contact";
 import Products from "./pages/Products";
 
-import AdminLayout from "@/components/admin/AdminLayout";
-import ProtectedRoute from "@/components/admin/ProtectedRoute";
-import AdminLogin from "./pages/admin/auth/AdminLogin";
-import AdminRegister from "./pages/admin/auth/AdminRegister";
-import AdminDashboard from "./pages/admin/dashboard/AdminDashboard";
-import AdminPortfolioList from "./pages/admin/portfolios/AdminPortfolioList";
-import AdminPortfolioForm from "./pages/admin/portfolios/AdminPortfolioForm";
-import AdminSubscriptionList from "./pages/admin/subscriptions/AdminSubscriptionList";
-import AdminSubscriptionForm from "./pages/admin/subscriptions/AdminSubscriptionForm";
-import AdminTeamMemberList from "./pages/admin/team/AdminTeamMemberList";
-import AdminTeamMemberForm from "./pages/admin/team/AdminTeamMemberForm";
-import AdminUserList from "./pages/admin/users/AdminUserList";
+
 
 const queryClient = new QueryClient();
 
@@ -92,31 +81,7 @@ const App = () => (
                   <Contact />
                 </>
               } />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<AdminDashboard />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="portfolios" element={<AdminPortfolioList />} />
-                <Route path="portfolios/new" element={<AdminPortfolioForm />} />
-                <Route path="portfolios/edit/:id" element={<AdminPortfolioForm />} />
-                <Route path="subscriptions" element={<AdminSubscriptionList />} />
-                <Route path="subscriptions/new" element={<AdminSubscriptionForm />} />
-                <Route path="subscriptions/edit/:id" element={<AdminSubscriptionForm />} />
-                <Route path="team" element={<AdminTeamMemberList />} />
-                <Route path="team/new" element={<AdminTeamMemberForm />} />
-                <Route path="team/edit/:id" element={<AdminTeamMemberForm />} />
-                <Route path="users" element={<AdminUserList />} />
-              </Route>
-              <Route path="/admin/subscriptions" element={<AdminSubscriptionList />} />
-              <Route path="/admin/subscriptions/new" element={<AdminSubscriptionForm />} />
-              <Route path="/admin/subscriptions/edit/:id" element={<AdminSubscriptionForm />} />
+             
               <Route path="*" element={
                 <>
                   <SEO 

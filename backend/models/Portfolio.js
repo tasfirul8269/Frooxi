@@ -10,28 +10,45 @@ const portfolioSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  image: {
+  imageUrl: {
     type: String,
     required: true
   },
   category: {
     type: String,
-    required: true
+    required: true,
+    enum: ['web', 'mobile', 'design', 'other']
   },
   technologies: [{
     type: String,
-    required: true
+    trim: true
   }],
-  link: {
+  client: {
     type: String,
-    required: true
+    trim: true
+  },
+  projectUrl: {
+    type: String,
+    trim: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   },
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
-const Portfolio = mongoose.model('Portfolio', portfolioSchema);
+// Update the updatedAt timestamp before saving
+portfolioSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-export default Portfolio; 
+export default mongoose.model('Portfolio', portfolioSchema); 

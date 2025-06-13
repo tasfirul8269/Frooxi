@@ -1,39 +1,31 @@
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-const auth = (req, res, next) => {
-  // Get token from header
-  const token = req.header('x-auth-token');
-
-  // Check if no token
-  if (!token) {
-    return res.status(401).json({ 
-      msg: 'No token, authorization denied',
-      error: 'AUTH_NO_TOKEN'
-    });
-  }
-
+export const auth = async (req, res, next) => {
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Check if token is expired
-    if (decoded.exp && decoded.exp < Date.now() / 1000) {
-      return res.status(401).json({ 
-        msg: 'Token has expired',
-        error: 'AUTH_TOKEN_EXPIRED'
-      });
+    let token;
+
+    if (req.headers.authorization?.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
     }
 
-    // Add user from payload
-    req.user = decoded.user;
+    if (!token) {
+      return res.status(401).json({ msg: 'Not authorized, no token' });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Get user from the token
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(401).json({ msg: 'Not authorized, user not found' });
+    }
+
+    req.user = user;
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err.message);
-    res.status(401).json({ 
-      msg: 'Token is not valid',
-      error: 'AUTH_INVALID_TOKEN'
-    });
+    console.error('Auth middleware error:', err);
+    res.status(401).json({ msg: 'Not authorized, token failed' });
   }
-};
-
-export default auth; 
+}; 

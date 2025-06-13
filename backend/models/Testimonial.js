@@ -1,34 +1,32 @@
 import mongoose from 'mongoose';
 
-const teamMemberSchema = new mongoose.Schema({
-  name: {
+const testimonialSchema = new mongoose.Schema({
+  clientName: {
     type: String,
     required: true,
     trim: true
   },
-  position: {
+  clientPosition: {
     type: String,
-    required: true,
     trim: true
   },
-  bio: {
+  clientCompany: {
+    type: String,
+    trim: true
+  },
+  content: {
     type: String,
     required: true
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
   },
   imageUrl: {
-    type: String,
-    required: true
+    type: String
   },
-  socialLinks: {
-    linkedin: String,
-    twitter: String,
-    github: String,
-    portfolio: String
-  },
-  skills: [{
-    type: String,
-    trim: true
-  }],
   isActive: {
     type: Boolean,
     default: true
@@ -48,9 +46,9 @@ const teamMemberSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt timestamp before saving
-teamMemberSchema.pre('save', function(next) {
+testimonialSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-export default mongoose.model('TeamMember', teamMemberSchema); 
+export default mongoose.model('Testimonial', testimonialSchema); 
