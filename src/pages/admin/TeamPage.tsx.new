@@ -12,15 +12,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
-import { getTeamMembers, deleteTeamMember } from "@/lib/api/teamService";
-import type { TeamMember } from "@/types/team";
+import { getTeamMembers, deleteTeamMember, TeamMember as TeamMemberType } from "@/lib/api/teamService";
 import { TeamMemberForm } from "@/components/forms/TeamMemberForm";
 
 export default function TeamPage() {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [editingMember, setEditingMember] = useState<TeamMemberType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -51,7 +50,7 @@ export default function TeamPage() {
     setShowForm(true);
   };
 
-  const handleEditMember = (member: TeamMember) => {
+  const handleEditMember = (member: TeamMemberType) => {
     setEditingMember(member);
     setShowForm(true);
   };
@@ -108,7 +107,7 @@ export default function TeamPage() {
   // Filter team members based on search term
   const filteredMembers = teamMembers.filter(member => 
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (member.position && member.position.toLowerCase().includes(searchTerm.toLowerCase()))
+    member.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading && !teamMembers.length) {
@@ -120,7 +119,7 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Team Members</h2>
         <Button onClick={handleAddMember}>
@@ -183,9 +182,9 @@ export default function TeamPage() {
                         )}
                         {member.name}
                       </TableCell>
-                      <TableCell>{member.position || '-'}</TableCell>
+                      <TableCell>{member.position}</TableCell>
                       <TableCell className="max-w-xs truncate">
-                        {member.bio || '-'}
+                        {member.bio}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 

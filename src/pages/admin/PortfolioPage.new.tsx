@@ -28,9 +28,9 @@ import {
   getPortfolioItems, 
   deletePortfolioItem, 
   togglePortfolioItemStatus, 
-  togglePortfolioItemFeatured
+  togglePortfolioItemFeatured,
+  type PortfolioItem
 } from "@/lib/api/portfolioService"
-import type { PortfolioItem } from "@/types/portfolio"
 import { PortfolioItemForm } from "@/components/forms/PortfolioItemForm"
 import { format } from "date-fns"
 import React from "react"

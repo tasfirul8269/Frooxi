@@ -10,6 +10,7 @@ import portfolioRoutes from './routes/portfolioRoutes.js';
 import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import testimonialRoutes from './routes/testimonialRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -24,8 +25,16 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:8080', // Your frontend URL
+  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,6 +44,7 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

@@ -28,9 +28,9 @@ import {
   getPortfolioItems, 
   deletePortfolioItem, 
   togglePortfolioItemStatus, 
-  togglePortfolioItemFeatured
+  togglePortfolioItemFeatured,
+  type PortfolioItem
 } from "@/lib/api/portfolioService"
-import type { PortfolioItem } from "@/types/portfolio"
 import { PortfolioItemForm } from "@/components/forms/PortfolioItemForm"
 import { format } from "date-fns"
 import React from "react"
@@ -404,7 +404,7 @@ export default function PortfolioPage() {
                           variant="ghost"
                           size="icon"
                           onClick={(e) => handleDeleteClick(e, item._id)}
-                          disabled={deleteMutation.isPending && itemToDelete === item._id}
+                          disabled={deleteMutation.isPending}
                         >
                           {deleteMutation.isPending && itemToDelete === item._id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />

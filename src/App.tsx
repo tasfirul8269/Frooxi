@@ -40,6 +40,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Import all admin pages
+import UsersPage from "./pages/admin/UsersPage";
+import TeamPage from "./pages/admin/TeamPage";
+import TestimonialsPage from "./pages/admin/TestimonialsPage";
+import SubscriptionsPage from "./pages/admin/SubscriptionsPage";
+import SettingsPage from "./pages/admin/SettingsPage";
+
 // Admin Routes Component
 const AdminRoutes: React.FC = () => (
   <ProtectedRoute>
@@ -47,6 +54,11 @@ const AdminRoutes: React.FC = () => (
       <Routes>
         <Route index element={<Dashboard />} />
         <Route path="portfolio" element={<PortfolioPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="team" element={<TeamPage />} />
+        <Route path="testimonials" element={<TestimonialsPage />} />
+        <Route path="subscriptions" element={<SubscriptionsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AdminLayout>

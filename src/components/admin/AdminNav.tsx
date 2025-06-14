@@ -1,44 +1,55 @@
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LogOut, Moon, Sun } from "lucide-react"
+import { 
+  LogOut, 
+  Moon, 
+  Sun, 
+  LayoutDashboard, 
+  Briefcase, 
+  CreditCard, 
+  MessageSquare, 
+  Users as UsersIcon, 
+  UserCog, 
+  Settings as SettingsIcon 
+} from "lucide-react"
 import { useTheme } from "@/contexts/ThemeContext"
 
 const navItems = [
   {
     title: "Dashboard",
     href: "/admin",
-    icon: "LayoutDashboard"
+    icon: LayoutDashboard
   },
   {
     title: "Portfolio",
     href: "/admin/portfolio",
-    icon: "Briefcase"
+    icon: Briefcase
   },
   {
     title: "Subscriptions",
     href: "/admin/subscriptions",
-    icon: "CreditCard"
+    icon: CreditCard
   },
   {
     title: "Testimonials",
     href: "/admin/testimonials",
-    icon: "MessageSquare"
+    icon: MessageSquare
   },
   {
     title: "Team",
     href: "/admin/team",
-    icon: "Users"
+    icon: UsersIcon
   },
   {
     title: "Users",
     href: "/admin/users",
-    icon: "UserCog"
+    icon: UserCog
   },
   {
     title: "Settings",
     href: "/admin/settings",
-    icon: "Settings"
+    icon: SettingsIcon
   }
 ]
 
@@ -64,22 +75,19 @@ export function AdminNav() {
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navItems.map((item) => {
-              const Icon = require(`lucide-react`)[item.icon] || 'div'
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    location.pathname === item.href ? "bg-muted text-primary" : ""
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.title}
-                </Link>
-              )
-            })}
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                  location.pathname === item.href ? "bg-muted text-primary" : ""
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.title}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="mt-auto p-4">
