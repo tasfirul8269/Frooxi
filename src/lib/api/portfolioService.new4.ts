@@ -14,72 +14,52 @@ export const getPortfolioItem = async (id: string): Promise<PortfolioItem> => {
 };
 
 // Create a new portfolio item
-interface PortfolioFormData extends Omit<PortfolioItem, '_id' | 'createdAt' | 'updatedAt' | 'technologies' | 'tags'> {
-  _file?: File;
-  technologies: string | string[];
-  tags?: string | string[];
-}
-
-export const createPortfolioItem = async (data: PortfolioFormData): Promise<PortfolioItem> => {
+export const createPortfolioItem = async (data: CreatePortfolioItemDto & { _file?: File }): Promise<PortfolioItem> => {
   try {
     console.log('Starting createPortfolioItem with data:', data);
     
-    if (!data._file && !data.image) {
+    if (!data._file) {
       throw new Error('Image file is required');
     }
 
-    // Create FormData for file upload
-    const formData = new FormData();
-  
-    // Extract file if exists
-    const file = data._file;
-    
-    // Prepare the data object with proper type handling
-    const payload = {
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      year: data.year,
-      link: data.link || undefined,
-      featured: data.featured || false,
-      isActive: data.isActive !== false, // Default to true if not provided
+    // Map frontend category values to backend values
+    const categoryMap: Record<string, string> = {
+      'Web Development': 'web',
+      'Mobile Development': 'mobile',
+      'UI/UX Design': 'design',
+      'Branding': 'design',
+      'Graphic Design': 'design',
+      'Other': 'other'
     };
 
-    // Handle technologies and tags as arrays
+    // Get the backend category value, default to 'other' if not found
+    const backendCategory = categoryMap[data.category as string] || 'other';
+
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('image', data._file);
+    formData.append('title', data.title);
+    formData.append('description', data.description);
+    formData.append('category', backendCategory);
+    
+    // Handle technologies array
     const technologies = Array.isArray(data.technologies) 
       ? data.technologies 
       : typeof data.technologies === 'string' 
         ? data.technologies.split(',').map(t => t.trim()).filter(Boolean)
         : [];
-
-    const tags = Array.isArray(data.tags)
-      ? data.tags
-      : typeof data.tags === 'string'
-        ? data.tags.split(',').map(t => t.trim()).filter(Boolean)
-        : [];
     
-    // Append all fields to form data
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-
-    // Append arrays
-    technologies.forEach(tech => {
-      if (tech) formData.append('technologies', tech);
-    });
-
-    tags.forEach(tag => {
-      if (tag) formData.append('tags', tag);
-    });
+    formData.append('technologies', JSON.stringify(technologies));
     
-    // Handle file upload
-    if (file) {
-      formData.append('image', file);
-    } else if (data.image) {
-      // If no new file but image URL exists, use that
-      formData.append('image', data.image);
+    // Add optional fields if they exist
+    if (data.year) {
+      formData.append('year', String(data.year));
+    }
+    if (data.isFeatured !== undefined) {
+      formData.append('isFeatured', String(data.isFeatured));
+    }
+    if (data.isActive !== undefined) {
+      formData.append('isActive', String(data.isActive));
     }
     
     console.log('Sending form data to server');

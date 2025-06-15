@@ -1,13 +1,13 @@
 export interface Testimonial {
   _id: string;
-  author: string;
-  role: string;
-  company: string;
+  clientName: string;
+  clientPosition: string;
+  clientCompany: string;
   content: string;
-  avatarUrl?: string;
+  imageUrl?: string;
   rating: number;
   isActive: boolean;
-  order?: number;
+  order: number;
   featured: boolean;
   createdAt: string;
   updatedAt: string;

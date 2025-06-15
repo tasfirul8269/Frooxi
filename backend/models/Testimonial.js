@@ -31,6 +31,10 @@ const testimonialSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  featured: {
+    type: Boolean,
+    default: false
+  },
   order: {
     type: Number,
     default: 0

@@ -3,6 +3,7 @@ export interface SubscriptionPlan {
   name: string;
   description: string;
   price: number;
+  duration: number; // Duration in months
   currency: string;
   billingCycle: 'monthly' | 'yearly';
   features: string[];

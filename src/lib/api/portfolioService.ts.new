@@ -1,5 +1,28 @@
 import api from './api';
 import type { PortfolioItem, CreatePortfolioItemDto, UpdatePortfolioItemDto } from '@/types/portfolio';
+import { uploadToCloudinary } from '@/lib/utils/cloudinary';
+
+// Upload a portfolio image to Cloudinary
+export const uploadPortfolioImage = async (file: File): Promise<{ url: string; isLocal?: boolean }> => {
+  try {
+    console.log('Uploading image to Cloudinary...');
+    const result = await uploadToCloudinary(file);
+    console.log('Image uploaded to Cloudinary:', result.secure_url);
+    return {
+      url: result.secure_url,
+      isLocal: false
+    };
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    
+    // Fallback to local URL if Cloudinary upload fails
+    console.warn('Using local image URL as fallback');
+    return {
+      url: URL.createObjectURL(file),
+      isLocal: true
+    };
+  }
+};
 
 // Get all portfolio items
 export const getPortfolioItems = async (): Promise<PortfolioItem[]> => {
@@ -14,84 +37,56 @@ export const getPortfolioItem = async (id: string): Promise<PortfolioItem> => {
 };
 
 // Create a new portfolio item
-interface PortfolioFormData extends Omit<PortfolioItem, '_id' | 'createdAt' | 'updatedAt' | 'technologies' | 'tags'> {
-  _file?: File;
-  technologies: string | string[];
-  tags?: string | string[];
-}
-
-export const createPortfolioItem = async (data: PortfolioFormData): Promise<PortfolioItem> => {
+export const createPortfolioItem = async (data: CreatePortfolioItemDto & { _file?: File }): Promise<PortfolioItem> => {
   try {
     console.log('Starting createPortfolioItem with data:', data);
     
-    if (!data._file && !data.image) {
-      throw new Error('Image file is required');
+    // Handle image upload if a file is provided
+    let imageUrl = data.image;
+    
+    if (data._file) {
+      console.log('Processing image file...');
+      try {
+        const uploadResponse = await uploadPortfolioImage(data._file);
+        imageUrl = uploadResponse.url;
+        
+        if (uploadResponse.isLocal) {
+          console.warn('Using local image URL instead of Cloudinary:', imageUrl);
+        } else {
+          console.log('Image uploaded to Cloudinary:', imageUrl);
+        }
+      } catch (error) {
+        console.error('Error processing image:', error);
+        throw new Error('Failed to upload image. Please try again.');
+      }
     }
 
-    // Create FormData for file upload
-    const formData = new FormData();
-  
-    // Extract file if exists
-    const file = data._file;
-    
-    // Prepare the data object with proper type handling
-    const payload = {
+    // Ensure we have a valid image URL
+    if (!imageUrl) {
+      throw new Error('Image is required');
+    }
+
+    // Prepare the data to send to the server
+    const portfolioData = {
       title: data.title,
       description: data.description,
+      image: imageUrl,
       category: data.category,
-      year: data.year,
-      link: data.link || undefined,
-      featured: data.featured || false,
-      isActive: data.isActive !== false, // Default to true if not provided
+      technologies: Array.isArray(data.technologies) 
+        ? data.technologies 
+        : typeof data.technologies === 'string' 
+          ? data.technologies.split(',').map(t => t.trim()).filter(Boolean)
+          : [],
+      year: data.year ? parseInt(String(data.year), 10) : new Date().getFullYear(),
+      isFeatured: Boolean(data.isFeatured),
+      isActive: Boolean(data.isActive)
     };
-
-    // Handle technologies and tags as arrays
-    const technologies = Array.isArray(data.technologies) 
-      ? data.technologies 
-      : typeof data.technologies === 'string' 
-        ? data.technologies.split(',').map(t => t.trim()).filter(Boolean)
-        : [];
-
-    const tags = Array.isArray(data.tags)
-      ? data.tags
-      : typeof data.tags === 'string'
-        ? data.tags.split(',').map(t => t.trim()).filter(Boolean)
-        : [];
     
-    // Append all fields to form data
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-
-    // Append arrays
-    technologies.forEach(tech => {
-      if (tech) formData.append('technologies', tech);
-    });
-
-    tags.forEach(tag => {
-      if (tag) formData.append('tags', tag);
-    });
+    console.log('Sending portfolio data to server:', portfolioData);
     
-    // Handle file upload
-    if (file) {
-      formData.append('image', file);
-    } else if (data.image) {
-      // If no new file but image URL exists, use that
-      formData.append('image', data.image);
-    }
-    
-    console.log('Sending form data to server');
-    
-    const response = await api.post('/portfolio', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
+    const response = await api.post('/portfolio', portfolioData);
     return response.data;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in createPortfolioItem:', error);
     
     let errorMessage = 'Failed to create portfolio item';

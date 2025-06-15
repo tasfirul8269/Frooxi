@@ -13,15 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
-import { 
-  User as UserType,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-  updateUserStatus,
-  getUsers
-} from "@/lib/api/userService";
+import { userService, User as UserType } from "@/lib/api/userService";
 
 // UserForm component for adding/editing users
 const UserForm = ({ 
@@ -39,7 +31,8 @@ const UserForm = ({
     name: user?.name || '',
     email: user?.email || '',
     password: '',
-    isAdmin: user?.isAdmin || false
+    isAdmin: user?.isAdmin || false,
+    isActive: user?.isActive ?? true
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,18 +97,33 @@ const UserForm = ({
                 />
               </div>
             )}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isAdmin"
-                name="isAdmin"
-                checked={formData.isAdmin}
-                onChange={handleChange}
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-              />
-              <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-700">
-                Admin
-              </label>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isAdmin"
+                  name="isAdmin"
+                  checked={formData.isAdmin}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-700">
+                  Admin
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                  Active
+                </label>
+              </div>
             </div>
           </div>
           <div className="flex justify-end space-x-2 mt-4">
@@ -156,7 +164,7 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await getUsers();
+      const data = await userService.getUsers();
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -183,7 +191,7 @@ export default function UsersPage() {
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await deleteUser(userId);
+        await userService.deleteUser(userId);
         toast({
           title: 'Success',
           description: 'User deleted successfully',
@@ -206,22 +214,14 @@ export default function UsersPage() {
       
       if (editingUser) {
         // Update existing user
-        const { password, ...updateData } = userData;
-        const updatePayload: any = { ...updateData };
-        
-        // Only include password in the update if it's being changed
-        if (password) {
-          updatePayload.password = password;
-        }
-        
-        await updateUser(editingUser._id, updatePayload);
+        await userService.updateUser(editingUser._id, userData);
         toast({
           title: 'Success',
           description: 'User updated successfully',
         });
       } else {
         // Create new user
-        await createUser(userData);
+        await userService.createUser(userData);
         toast({
           title: 'Success',
           description: 'User created successfully',
@@ -230,16 +230,33 @@ export default function UsersPage() {
       
       setShowForm(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving user:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to save user';
       toast({
         title: 'Error',
-        description: errorMessage,
+        description: 'Failed to save user',
         variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      await userService.updateUserStatus(userId, !currentStatus);
+      toast({
+        title: 'Success',
+        description: `User ${!currentStatus ? 'activated' : 'deactivated'} successfully`,
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user status',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -296,6 +313,7 @@ export default function UsersPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -325,7 +343,14 @@ export default function UsersPage() {
                         {user.isAdmin ? 'Admin' : 'User'}
                       </span>
                     </TableCell>
-
+                    <TableCell>
+                      <div className="flex items-center">
+                        <div className={`h-2.5 w-2.5 rounded-full mr-2 ${
+                          user.isActive ? 'bg-green-500' : 'bg-gray-400'
+                        }`}></div>
+                        <span>{user.isActive ? 'Active' : 'Inactive'}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Button
@@ -335,7 +360,17 @@ export default function UsersPage() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(user._id, user.isActive)}
+                        >
+                          {user.isActive ? (
+                            <span className="text-yellow-600">Deactivate</span>
+                          ) : (
+                            <span className="text-green-600">Activate</span>
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

@@ -19,6 +19,12 @@ const teamMemberSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  email: {
+    type: String,
+    trim: true,
+    sparse: true,
+    default: null
+  },
   socialLinks: {
     linkedin: String,
     twitter: String,
@@ -53,4 +59,4 @@ teamMemberSchema.pre('save', function(next) {
   next();
 });
 
-export default mongoose.model('TeamMember', teamMemberSchema); 
+export default mongoose.model('TeamMember', teamMemberSchema);

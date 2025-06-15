@@ -29,8 +29,8 @@ cloudinary.v2.config({
 const corsOptions = {
   origin: 'http://localhost:8080', // Your frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 };
 
 // Middleware

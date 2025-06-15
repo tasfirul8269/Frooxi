@@ -4,7 +4,9 @@ import {
   getTestimonial,
   createTestimonial,
   updateTestimonial,
-  deleteTestimonial
+  deleteTestimonial,
+  toggleTestimonialStatus,
+  toggleTestimonialFeatured
 } from '../controllers/testimonialController.js';
 import { auth } from '../middleware/auth.js';
 import adminAuth from '../middleware/adminAuth.js';
@@ -19,5 +21,7 @@ router.get('/:id', getTestimonial);
 router.post('/', [auth, adminAuth], createTestimonial);
 router.put('/:id', [auth, adminAuth], updateTestimonial);
 router.delete('/:id', [auth, adminAuth], deleteTestimonial);
+router.patch('/:id/status', [auth, adminAuth], toggleTestimonialStatus);
+router.patch('/:id/featured', [auth, adminAuth], toggleTestimonialFeatured);
 
-export default router; 
+export default router;

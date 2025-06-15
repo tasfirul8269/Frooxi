@@ -44,7 +44,8 @@ export const createTeamMember = async (req, res) => {
       position,
       bio,
       socialLinks,
-      order
+      order,
+      email
     } = req.body;
 
     // Get image URL from Cloudinary upload
@@ -60,7 +61,8 @@ export const createTeamMember = async (req, res) => {
       bio,
       imageUrl,
       socialLinks: socialLinks ? JSON.parse(socialLinks) : {},
-      order: order || 0
+      order: order || 0,
+      email: email || null
     });
 
     await teamMember.save();

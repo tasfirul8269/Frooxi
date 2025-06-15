@@ -43,9 +43,11 @@ export const createPortfolio = async (req, res) => {
       title,
       description,
       category,
-      technologies,
+      technologies = [],
       client,
-      projectUrl
+      projectUrl,
+      featured = false,
+      isActive = true
     } = req.body;
 
     // Get image URL from Cloudinary upload
@@ -55,14 +57,19 @@ export const createPortfolio = async (req, res) => {
       return res.status(400).json({ msg: 'Image is required' });
     }
 
+    // Ensure technologies is an array
+    const technologiesArray = Array.isArray(technologies) ? technologies : [technologies].filter(Boolean);
+
     const portfolio = new Portfolio({
       title,
       description,
       imageUrl,
       category,
-      technologies: technologies ? JSON.parse(technologies) : [],
+      technologies: technologiesArray,
       client,
-      projectUrl
+      projectUrl,
+      featured: Boolean(featured),
+      isActive: Boolean(isActive)
     });
 
     await portfolio.save();
@@ -83,9 +90,11 @@ export const updatePortfolio = async (req, res) => {
       description,
       category,
       technologies,
-      client,
-      projectUrl,
-      isActive
+      year,
+      link,
+      tags,
+      isActive,
+      featured
     } = req.body;
 
     let portfolio = await Portfolio.findById(req.params.id);
@@ -95,24 +104,28 @@ export const updatePortfolio = async (req, res) => {
 
     // If new image is uploaded, delete old image from Cloudinary
     if (req.file) {
-      const oldImagePublicId = portfolio.imageUrl.split('/').pop().split('.')[0];
-      await cloudinary.uploader.destroy(oldImagePublicId);
+      // Delete old image if it exists
+      if (portfolio.image) {
+        const publicId = portfolio.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
+      portfolio.image = req.file.path;
     }
 
-    const updateData = {
-      title,
-      description,
-      category,
-      technologies: technologies ? JSON.parse(technologies) : portfolio.technologies,
-      client,
-      projectUrl,
-      isActive
-    };
+    // Ensure technologies and tags are arrays
+    const technologiesArray = Array.isArray(technologies) ? technologies : [technologies].filter(Boolean);
+    const tagsArray = Array.isArray(tags) ? tags : [tags].filter(Boolean);
 
-    // Add new image URL if uploaded
-    if (req.file) {
-      updateData.imageUrl = req.file.path;
-    }
+    // Update fields
+    if (title !== undefined) portfolio.title = title;
+    if (description !== undefined) portfolio.description = description;
+    if (category !== undefined) portfolio.category = category;
+    if (technologies !== undefined) portfolio.technologies = technologiesArray;
+    if (year !== undefined) portfolio.year = year;
+    if (link !== undefined) portfolio.link = link;
+    if (tags !== undefined) portfolio.tags = tagsArray;
+    if (isActive !== undefined) portfolio.isActive = Boolean(isActive);
+    if (featured !== undefined) portfolio.featured = Boolean(featured);
 
     portfolio = await Portfolio.findByIdAndUpdate(
       req.params.id,
@@ -130,27 +143,62 @@ export const updatePortfolio = async (req, res) => {
   }
 };
 
+// @desc    Toggle featured status of a portfolio item
+// @route   PATCH /api/portfolio/:id/featured
+// @access  Private/Admin
+export const toggleFeatured = async (req, res) => {
+  try {
+    const portfolio = await Portfolio.findById(req.params.id);
+    if (!portfolio) {
+      return res.status(404).json({ success: false, message: 'Portfolio not found' });
+    }
+
+    portfolio.featured = !portfolio.featured;
+    await portfolio.save();
+
+    res.json({ 
+      success: true, 
+      message: `Portfolio ${portfolio.featured ? 'marked as featured' : 'removed from featured'}`,
+      featured: portfolio.featured
+    });
+  } catch (err) {
+    console.error('Error toggling featured status:', err);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ success: false, message: 'Portfolio not found' });
+    }
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // @desc    Delete portfolio item
 // @route   DELETE /api/portfolio/:id
 // @access  Private/Admin
 export const deletePortfolio = async (req, res) => {
   try {
     const portfolio = await Portfolio.findById(req.params.id);
+    
     if (!portfolio) {
       return res.status(404).json({ msg: 'Portfolio not found' });
     }
 
-    // Delete image from Cloudinary
-    const imagePublicId = portfolio.imageUrl.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(imagePublicId);
+    // Delete image from Cloudinary if it exists
+    if (portfolio.image) {
+      try {
+        const publicId = portfolio.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      } catch (err) {
+        console.error('Error deleting image from Cloudinary:', err);
+        // Continue with deletion even if image deletion fails
+      }
+    }
 
-    await portfolio.deleteOne();
+    await Portfolio.deleteOne({ _id: req.params.id });
     res.json({ msg: 'Portfolio removed' });
   } catch (err) {
     console.error('Error deleting portfolio:', err);
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'Portfolio not found' });
-    }
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ 
+      msg: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
-}; 
+};

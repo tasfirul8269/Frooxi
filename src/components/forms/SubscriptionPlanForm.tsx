@@ -19,6 +19,7 @@ export function SubscriptionPlanForm({ plan, onSave, onCancel, isSubmitting }: S
     name: plan?.name || '',
     description: plan?.description || '',
     price: plan?.price || 0,
+    duration: plan?.duration || 1, // Default to 1 month
     currency: plan?.currency || 'USD',
     billingCycle: plan?.billingCycle || 'monthly',
     features: plan?.features || [''],
@@ -100,6 +101,19 @@ export function SubscriptionPlanForm({ plan, onSave, onCancel, isSubmitting }: S
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="e.g., Basic, Pro, Enterprise"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration (months) *</Label>
+              <Input
+                id="duration"
+                name="duration"
+                type="number"
+                min="1"
+                value={formData.duration}
+                onChange={handleChange}
                 required
               />
             </div>

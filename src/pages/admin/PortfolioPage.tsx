@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, Search, Filter, Edit, Trash2, Loader2, X, Check } from "lucide-react"
+import { Plus, Search, Filter, Edit, Trash2, Loader2, X, Check, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import api from "@/lib/api/api"
 import {
   Table,
   TableBody,
@@ -26,11 +27,13 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { 
   getPortfolioItems, 
+  createPortfolioItem,
+  updatePortfolioItem,
   deletePortfolioItem, 
   togglePortfolioItemStatus, 
   togglePortfolioItemFeatured
 } from "@/lib/api/portfolioService"
-import type { PortfolioItem } from "@/types/portfolio"
+import type { PortfolioItem, CreatePortfolioItemDto, UpdatePortfolioItemDto } from "@/types/portfolio"
 import { PortfolioItemForm } from "@/components/forms/PortfolioItemForm"
 import { format } from "date-fns"
 import React from "react"
@@ -55,7 +58,7 @@ export default function PortfolioPage() {
   const filteredItems = portfolioItems.filter(item => 
     item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    (item.technologies || []).some(tech => tech.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   // Delete mutation
@@ -85,13 +88,17 @@ export default function PortfolioPage() {
       togglePortfolioItemStatus(id, isActive),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolioItems'] })
+      toast({
+        title: "Success",
+        description: "Portfolio item status updated.",
+      });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to update portfolio item status.",
+        description: "Failed to update status.",
         variant: "destructive",
-      })
+      });
     },
   })
 
@@ -101,13 +108,17 @@ export default function PortfolioPage() {
       togglePortfolioItemFeatured(id, featured),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolioItems'] })
+      toast({
+        title: "Success",
+        description: "Portfolio item featured status updated.",
+      });
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to update featured status.",
         variant: "destructive",
-      })
+      });
     },
   })
 
@@ -118,12 +129,121 @@ export default function PortfolioPage() {
     setShowForm(true)
   }
 
+  // Handle toggle status
+  const handleToggleStatus = (id: string, currentStatus: boolean) => {
+    toggleStatusMutation.mutate({ id, isActive: !currentStatus })
+  }
+
+  // Handle toggle featured
+  const handleToggleFeatured = (id: string, featured: boolean) => {
+    toggleFeaturedMutation.mutate({ id, featured })
+  }
+
+  // Create portfolio item mutation
+  const createPortfolioMutation = useMutation({
+    mutationFn: (data: CreatePortfolioItemDto) => createPortfolioItem(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portfolioItems'] })
+      toast({
+        title: "Success",
+        description: "Portfolio item created successfully.",
+      })
+      setShowForm(false)
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create portfolio item.",
+        variant: "destructive",
+      })
+    },
+  })
+
+  // Update portfolio item mutation
+  const updatePortfolioMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdatePortfolioItemDto }) => 
+      updatePortfolioItem(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portfolioItems'] })
+      toast({
+        title: "Success",
+        description: "Portfolio item updated successfully.",
+      })
+      setShowForm(false)
+      setEditingItem(null)
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update portfolio item.",
+        variant: "destructive",
+      })
+    },
+  })
+
   // Handle form submission
-  const handleFormSubmit = (data: any) => {
-    setShowForm(false)
-    setEditingItem(null)
-    queryClient.invalidateQueries({ queryKey: ['portfolioItems'] })
-    return Promise.resolve()
+  const handleFormSubmit = async (formData: any) => {
+    try {
+      console.log('Form submitted with data:', formData);
+      
+      if (editingItem) {
+        // For updates, we need to handle the file upload if a new image was selected
+        if (formData._file) {
+          try {
+            // Upload the new image first
+            const uploadFormData = new FormData();
+            uploadFormData.append('image', formData._file);
+            
+            console.log('Uploading image...');
+            const uploadResponse = await api.post('/portfolio/upload', uploadFormData, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            });
+            
+            console.log('Image upload response:', uploadResponse.data);
+            // Update the data with the new image URL
+            formData.image = uploadResponse.data.url;
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to upload image. Please try again.',
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
+        
+        // Prepare the update data
+        const { _file, ...updateData } = formData;
+        console.log('Updating portfolio item with data:', updateData);
+        
+        updatePortfolioMutation.mutate({ 
+          id: editingItem._id, 
+          data: updateData 
+        });
+      } else {
+        // For new items, the file upload is handled in the createPortfolioItem function
+        console.log('Creating new portfolio item with data:', formData);
+        createPortfolioMutation.mutate(formData);
+      }
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      let errorMessage = 'An error occurred while saving the portfolio item.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
   }
 
   // Handle delete button click
@@ -177,16 +297,6 @@ export default function PortfolioPage() {
     }
   }
 
-  // Handle status toggle
-  const handleToggleStatus = (id: string, currentStatus: boolean) => {
-    toggleStatusMutation.mutate({ id, isActive: !currentStatus })
-  }
-
-  // Handle featured toggle
-  const handleToggleFeatured = (id: string, currentStatus: boolean) => {
-    toggleFeaturedMutation.mutate({ id, featured: !currentStatus })
-  }
-
   // Handle add new item button click
   const handleAddNew = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -196,6 +306,12 @@ export default function PortfolioPage() {
 
   // Handle close form button click
   const handleCloseForm = () => {
+    setShowForm(false)
+    setEditingItem(null)
+  }
+
+  // Handle form cancel
+  const handleFormCancel = () => {
     setShowForm(false)
     setEditingItem(null)
   }
@@ -350,11 +466,11 @@ export default function PortfolioPage() {
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-3">
-                        {item.imageUrl && (
+                        {item.image && (
                           <img
-                            src={item.imageUrl}
+                            src={item.image || '/placeholder.svg'}
                             alt={item.title}
-                            className="h-10 w-10 rounded-md object-cover"
+                            className="h-12 w-12 rounded-md object-cover"
                           />
                         )}
                         <span>{item.title}</span>
@@ -376,19 +492,28 @@ export default function PortfolioPage() {
                     <TableCell>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleFeatured(item._id, item.featured)}
-                        disabled={toggleFeaturedMutation.isPending}
+                        size="icon"
+                        onClick={(e) => handleToggleFeatured(item._id, item.featured)}
                       >
                         {item.featured ? (
-                          <Check className="h-4 w-4 text-green-600" />
+                          <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                         ) : (
-                          <X className="h-4 w-4 text-gray-400" />
+                          <Star className="h-4 w-4" />
                         )}
+                        <span className="sr-only">Toggle Featured</span>
                       </Button>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(item.createdAt), 'MMM d, yyyy')}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleToggleStatus(item._id, item.isActive)}
+                      >
+                        <div
+                          className={`h-2 w-2 rounded-full ${
+                            item.isActive ? 'bg-green-500' : 'bg-gray-400'
+                          }`}
+                        />
+                        <span className="sr-only">Toggle Status</span>
+                      </Button>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
@@ -423,7 +548,7 @@ export default function PortfolioPage() {
         </Card>
       </div>
 
-      {/* Delete Confirmation Dialog */}
+// ...
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
@@ -477,12 +602,14 @@ export default function PortfolioPage() {
                 <span className="sr-only">Close</span>
               </Button>
             </div>
-            <PortfolioItemForm
-              item={editingItem || undefined}
-              onSave={handleFormSubmit}
-              onCancel={handleCloseForm}
-              isSubmitting={false}
-            />
+            {showForm && (
+              <PortfolioItemForm
+                item={editingItem}
+                onSave={handleFormSubmit}
+                onCancel={handleFormCancel}
+                isLoading={createPortfolioMutation.isPending || updatePortfolioMutation.isPending}
+              />
+            )}
           </div>
         </div>
       )}

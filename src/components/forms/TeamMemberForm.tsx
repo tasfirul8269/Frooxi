@@ -9,7 +9,7 @@ import type { TeamMember as TeamMemberType } from "@/types/team";
 
 interface TeamMemberFormProps {
   member?: TeamMemberType;
-  onSave: (data: any) => void;
+  onSave: (data: FormData) => void;
   onCancel: () => void;
   isSubmitting: boolean;
 }
@@ -30,6 +30,7 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
   
   const [previewImage, setPreviewImage] = useState(member?.imageUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,23 +54,16 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In a real app, you would upload the image to a server here
-      // and get back a URL to store in your database
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setPreviewImage(result);
-        setFormData(prev => ({
-          ...prev,
-          imageUrl: result // In a real app, this would be the URL from your server
-        }));
-      };
-      reader.readAsDataURL(file);
+      // Create a preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+      setImageFile(file);
     }
   };
 
   const handleRemoveImage = () => {
     setPreviewImage('');
+    setImageFile(null);
     setFormData(prev => ({
       ...prev,
       imageUrl: ''
@@ -81,7 +75,27 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    // Create FormData to handle file upload
+    const formDataToSend = new FormData();
+    
+    // Append all form fields
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('position', formData.position);
+    formDataToSend.append('bio', formData.bio);
+    
+    // Append social links as JSON string
+    formDataToSend.append('socialLinks', JSON.stringify(formData.socialLinks));
+    
+    // Append the image file if it exists
+    if (imageFile) {
+      formDataToSend.append('image', imageFile);
+    } else if (formData.imageUrl) {
+      // If there's an existing image URL, send it as is
+      formDataToSend.append('imageUrl', formData.imageUrl);
+    }
+    
+    onSave(formDataToSend);
   };
 
   return (
@@ -103,7 +117,6 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
                   required
                 />
               </div>
-              
               <div>
                 <Label htmlFor="position">Position</Label>
                 <Input
@@ -114,7 +127,6 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
                   required
                 />
               </div>
-              
               <div>
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
@@ -123,106 +135,116 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
                   value={formData.bio}
                   onChange={handleChange}
                   rows={4}
-                  required
                 />
               </div>
             </div>
-            
             <div className="space-y-4">
               <div>
                 <Label>Profile Image</Label>
-                {previewImage ? (
-                  <div className="mt-2 relative">
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="h-40 w-40 rounded-md object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <div className="flex justify-center">
-                        <ImageIcon className="h-12 w-12 text-gray-400" />
-                      </div>
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="file-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/90 focus-within:outline-none"
+                <div className="mt-2 flex items-center">
+                  <div className="relative">
+                    {previewImage ? (
+                      <div className="relative">
+                        <img
+                          src={previewImage}
+                          alt="Preview"
+                          className="h-32 w-32 rounded-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
                         >
-                          <span>Upload an image</span>
-                          <input
-                            id="file-upload"
-                            name="file-upload"
-                            type="file"
-                            className="sr-only"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            ref={fileInputRef}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
-                    </div>
+                    ) : (
+                      <div className="h-32 w-32 rounded-full bg-gray-100 flex items-center justify-center">
+                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="ml-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      ref={fileInputRef}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <Label
+                      htmlFor="image-upload"
+                      className="cursor-pointer bg-white text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium border border-gray-300"
+                    >
+                      Choose Image
+                    </Label>
+                    <p className="mt-2 text-xs text-gray-500">
+                      JPG, PNG, or GIF (max 5MB)
+                    </p>
+                  </div>
+                </div>
               </div>
-              
-              <div>
-                <Label htmlFor="linkedin">LinkedIn URL</Label>
-                <Input
-                  id="linkedin"
-                  name="linkedin"
-                  value={formData.socialLinks?.linkedin || ''}
-                  onChange={handleSocialLinkChange}
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="twitter">Twitter URL</Label>
-                <Input
-                  id="twitter"
-                  name="twitter"
-                  value={formData.socialLinks?.twitter || ''}
-                  onChange={handleSocialLinkChange}
-                  placeholder="https://twitter.com/username"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="github">GitHub URL</Label>
-                <Input
-                  id="github"
-                  name="github"
-                  value={formData.socialLinks?.github || ''}
-                  onChange={handleSocialLinkChange}
-                  placeholder="https://github.com/username"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="portfolio">Portfolio URL</Label>
-                <Input
-                  id="portfolio"
-                  name="portfolio"
-                  value={formData.socialLinks?.portfolio || ''}
-                  onChange={handleSocialLinkChange}
-                  placeholder="https://example.com"
-                />
+              <div className="space-y-2">
+                <Label>Social Links</Label>
+                <div className="space-y-2">
+                  <div>
+                    <Label htmlFor="linkedin" className="text-xs text-muted-foreground">
+                      LinkedIn
+                    </Label>
+                    <Input
+                      id="linkedin"
+                      name="linkedin"
+                      value={formData.socialLinks?.linkedin || ''}
+                      onChange={handleSocialLinkChange}
+                      placeholder="https://linkedin.com/in/username"
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="twitter" className="text-xs text-muted-foreground">
+                      Twitter
+                    </Label>
+                    <Input
+                      id="twitter"
+                      name="twitter"
+                      value={formData.socialLinks?.twitter || ''}
+                      onChange={handleSocialLinkChange}
+                      placeholder="https://twitter.com/username"
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="github" className="text-xs text-muted-foreground">
+                      GitHub
+                    </Label>
+                    <Input
+                      id="github"
+                      name="github"
+                      value={formData.socialLinks?.github || ''}
+                      onChange={handleSocialLinkChange}
+                      placeholder="https://github.com/username"
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="portfolio" className="text-xs text-muted-foreground">
+                      Portfolio
+                    </Label>
+                    <Input
+                      id="portfolio"
+                      name="portfolio"
+                      value={formData.socialLinks?.portfolio || ''}
+                      onChange={handleSocialLinkChange}
+                      placeholder="https://yourportfolio.com"
+                      className="h-8"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end space-x-4 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -235,10 +257,10 @@ export function TeamMemberForm({ member, onSave, onCancel, isSubmitting }: TeamM
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {member ? 'Updating...' : 'Creating...'}
+                  Saving...
                 </>
               ) : (
-                member ? 'Update Member' : 'Create Member'
+                'Save Member'
               )}
             </Button>
           </div>

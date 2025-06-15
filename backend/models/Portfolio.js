@@ -3,33 +3,46 @@ import mongoose from 'mongoose';
 const portfolioSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
+    required: [true, 'Title is required'],
     trim: true
   },
   description: {
     type: String,
-    required: true
+    required: [true, 'Description is required']
   },
-  imageUrl: {
+  image: {
     type: String,
-    required: true
+    required: [true, 'Image URL is required']
   },
   category: {
     type: String,
-    required: true,
-    enum: ['web', 'mobile', 'design', 'other']
+    required: [true, 'Category is required'],
+    enum: {
+      values: ['Web Development', 'Mobile Development', 'UI/UX Design', 'Graphic Design', 'Other'],
+      message: 'Please select a valid category'
+    }
   },
   technologies: [{
     type: String,
     trim: true
   }],
-  client: {
+  year: {
     type: String,
-    trim: true
+    required: [true, 'Year is required'],
+    match: [/^\d{4}$/, 'Please enter a valid year (e.g., 2023)']
   },
-  projectUrl: {
+  link: {
+    type: String,
+    trim: true,
+    match: [/^https?:\/\//, 'Please use a valid URL with HTTP or HTTPS']
+  },
+  tags: [{
     type: String,
     trim: true
+  }],
+  featured: {
+    type: Boolean,
+    default: false
   },
   isActive: {
     type: Boolean,

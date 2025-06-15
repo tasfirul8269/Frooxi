@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
-import { getTeamMembers, deleteTeamMember } from "@/lib/api/teamService";
+import { getTeamMembers, deleteTeamMember, createTeamMember, updateTeamMember } from "@/lib/api/teamService";
 import type { TeamMember } from "@/types/team";
 import { TeamMemberForm } from "@/components/forms/TeamMemberForm";
 
@@ -79,21 +79,25 @@ export default function TeamPage() {
   const handleSaveMember = async (formData: any) => {
     setIsSubmitting(true);
     try {
-      // In a real app, you would call create/update API here
-      // if (editingMember) {
-      //   await updateTeamMember(editingMember._id, formData);
-      // } else {
-      //   await createTeamMember(formData);
-      // }
-      
-      toast({
-        title: 'Success',
-        description: `Team member ${editingMember ? 'updated' : 'created'} successfully`,
-      });
+      if (editingMember) {
+        // Update existing team member
+        await updateTeamMember(editingMember._id, formData);
+        toast({
+          title: 'Success',
+          description: 'Team member updated successfully',
+        });
+      } else {
+        // Create new team member
+        await createTeamMember(formData);
+        toast({
+          title: 'Success',
+          description: 'Team member created successfully',
+        });
+      }
       
       setShowForm(false);
       fetchTeamMembers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving team member:', error);
       toast({
         title: 'Error',
