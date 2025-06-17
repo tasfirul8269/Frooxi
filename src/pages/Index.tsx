@@ -58,32 +58,6 @@ const services: ServiceItem[] = [
   },
 ];
 
-const portfolioItems: PortfolioItemType[] = [
-  {
-    title: "E-commerce Platform",
-    category: "Web Development",
-    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80",
-    description: "Modern e-commerce platform with advanced features"
-  },
-  {
-    title: "Mobile Banking App",
-    category: "Mobile Development",
-    image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=80",
-    description: "Secure and user-friendly banking application"
-  },
-  {
-    title: "Healthcare Dashboard",
-    category: "UI/UX Design",
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?auto=format&fit=crop&w=800&q=80",
-    description: "Intuitive dashboard for healthcare professionals"
-  },
-  {
-    title: "Restaurant Chain Website",
-    category: "Web Development",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
-    description: "Multi-location restaurant management system"
-  }
-];
 
 const testimonials: TestimonialItem[] = [
   {
@@ -424,7 +398,7 @@ const Index = () => {
 
       {/* Portfolio Section */}
       <PortfolioSection 
-        portfolioItemsData={portfolioItems} 
+        portfolioItemsData={[]} // Pass empty array to trigger data fetch
         sectionRef={(el) => { if (sectionsRef.current) sectionsRef.current[1] = el; }} 
       />
       <SubscriptionSection 

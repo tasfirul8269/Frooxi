@@ -1,5 +1,15 @@
 import api from './api';
 
+export interface ChartDataPoint {
+  month: string;
+  revenue: number;
+}
+
+export interface ProjectCategory {
+  name: string;
+  value: number;
+}
+
 export interface DashboardStats {
   success: boolean;
   stats: {
@@ -16,6 +26,10 @@ export interface DashboardStats {
     role: string;
     createdAt: string;
   }>;
+  charts: {
+    revenue: ChartDataPoint[];
+    projectCategories: ProjectCategory[];
+  };
 }
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
@@ -30,7 +44,11 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
         testimonials: response.data.stats.testimonials || 0,
         teamMembers: response.data.stats.teamMembers || 0
       },
-      recentActivities: response.data.recentActivities || []
+      recentActivities: response.data.recentActivities || [],
+      charts: {
+        revenue: response.data.charts?.revenue || [],
+        projectCategories: response.data.charts?.projectCategories || []
+      }
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);

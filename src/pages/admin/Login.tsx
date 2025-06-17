@@ -1,51 +1,101 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useTheme } from "@/contexts/ThemeContext"
-import { useAuth } from "@/contexts/AuthContext"
-import { Loader2 } from "lucide-react"
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2, AlertCircle } from 'lucide-react';
+
+interface LocationState {
+  from?: {
+    pathname: string;
+  };
+}
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const { theme } = useTheme()
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { theme } = useTheme();
+  const { login, isAuthenticated, loading: authLoading, error: authError, setError: setAuthError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as LocationState)?.from?.pathname || '/admin';
 
+  // Sync auth error with local error state
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
+  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/admin')
+      console.log('Already authenticated, redirecting to:', from);
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError('');
+    setAuthError(null); // Clear any previous auth errors
     
-    if (!email || !password) {
-      setError("Please fill in all fields")
-      return
+    // Basic validation
+    if (!email.trim() || !password) {
+      setError('Please fill in all fields');
+      return;
     }
 
-    setIsLoading(true)
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsLoading(true);
     
     try {
-      await login(email, password)
-      // Navigation happens automatically after successful login via AuthContext
-    } catch (err) {
-      console.error('Login error:', err);
-      const errorMessage = err.response?.data?.msg || 
-                         err.message || 
-                         "Failed to login. Please check your credentials and try again.";
-      setError(errorMessage)
+      console.log('Attempting to log in...');
+      await login(email, password);
+      // Navigation is handled by the AuthContext after successful login
+      console.log('Login successful, redirecting...');
+    } catch (err: any) {
+      console.error('Login error:', {
+        error: err,
+        message: err.message,
+        response: err.response?.data
+      });
+      
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (err.response) {
+        // Handle HTTP errors
+        switch (err.response.status) {
+          case 401:
+            errorMessage = 'Invalid email or password';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = err.response.data?.message || errorMessage;
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+      }
+      
+      setError(errorMessage);
+      setAuthError(errorMessage);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background p-4">
@@ -57,9 +107,10 @@ export default function Login() {
         
         <div className="rounded-lg border bg-card p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                {error}
+            {(error || authError) && (
+              <div className="flex items-start gap-2 rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <div>{error || authError}</div>
               </div>
             )}
             

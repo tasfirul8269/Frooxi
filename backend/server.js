@@ -11,6 +11,8 @@ import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import teamRoutes from './routes/teamRoutes.js';
 import testimonialRoutes from './routes/testimonialRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
+import transactionRoutes from './routes/transactionRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -26,17 +28,51 @@ cloudinary.v2.config({
 });
 
 // CORS configuration
-const corsOptions = {
-  origin: 'http://localhost:8080', // Your frontend URL
-  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-};
+const whitelist = [
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://frooxi.com',
+  'https://www.frooxi.com',
+  'https://frooxi-backend.onrender.com'
 
-// Middleware
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+].filter(Boolean);
+
+console.log('CORS Whitelist:', whitelist);
+
+// Enable CORS with specific options
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in whitelist
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Authorization'],
+  maxAge: 600
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
+// Log all incoming requests for debugging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log('Headers:', req.headers);
+  next();
+});
+
+// Parse JSON and URL-encoded bodies with increased limit
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/api/users', userRoutes);
@@ -45,6 +81,8 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/contacts', contactRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

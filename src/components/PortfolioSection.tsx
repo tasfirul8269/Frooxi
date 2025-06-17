@@ -1,19 +1,25 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { SectionHeading } from '@/components/section-heading';
 import { Button } from '@/components/ui/button';
+import { portfolioAPI } from '@/services/api'; // Import the portfolioAPI
 
 
 
 // Define and export the type for a single portfolio item
 export interface PortfolioItemType {
+  _id: string;
   title: string;
   category: string;
   image: string;
   description: string;
   link?: string;
   tags?: string[];
+  technologies?: string[];
+  year?: string;
+  featured?: boolean;
+  isActive?: boolean;
 }
 
 // Define the props for the PortfolioSection component
@@ -23,8 +29,21 @@ interface PortfolioSectionProps {
 }
 
 const PortfolioCard: React.FC<{ item: PortfolioItemType }> = ({ item }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    if (item.link) {
+      // Only prevent default if there's a link to avoid scrolling
+      e.preventDefault();
+      window.open(item.link, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <div className="group relative mb-6 break-inside-avoid rounded-2xl shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 transition-all duration-300 hover:shadow-2xl">
+    <div 
+      onClick={handleClick}
+      className={`group relative mb-6 break-inside-avoid rounded-2xl shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 transition-all duration-300 hover:shadow-2xl ${
+        item.link ? 'cursor-pointer' : ''
+      }`}
+    >
       <img
         src={item.image}
         alt={item.title || 'Portfolio project image'}
@@ -40,18 +59,89 @@ const PortfolioCard: React.FC<{ item: PortfolioItemType }> = ({ item }) => {
             <span key={tag+idx} className="inline-block px-2 py-0.5 rounded bg-slate-700/70 text-xs text-primary-200 animate-fade-in-up" style={{animationDelay: `${0.1 + idx * 0.05}s`}}>{tag}</span>
           ))}
         </div>
-        <p className="text-sm text-white/90 mb-3 line-clamp-2">{item.description}</p>
+        <p className="text-sm text-white/90 mb-3">{item.description}</p>
         {item.link && (
-          <a href={item.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-white/90 hover:bg-primary-600 hover:text-white font-medium text-primary-700 transition-colors duration-200 shadow-md">
-            View Project <ArrowRight size={16} />
-          </a>
+          <div className="flex items-center text-xs text-white/70 mt-1">
+            <span className="truncate">{new URL(item.link).hostname.replace('www.', '')}</span>
+            <ArrowRight size={14} className="ml-1 flex-shrink-0" />
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData, sectionRef }) => {
+const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData: initialPortfolioItems, sectionRef }) => {
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItemType[]>(initialPortfolioItems || []);
+  const [loading, setLoading] = useState(!initialPortfolioItems?.length);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPortfolioItems = async () => {
+      // Don't fetch if we already have data passed as props
+      if (initialPortfolioItems?.length) return;
+      
+      try {
+        setLoading(true);
+        const data = await portfolioAPI.getAll();
+        // Filter active items and map to match the expected format
+        const activeItems = data
+          .filter((item: any) => item.isActive !== false)
+          .map((item: any) => ({
+            _id: item._id,
+            title: item.title,
+            category: item.category || 'Web Development', // Default category if not provided
+            image: item.image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', // Default image if not provided
+            description: item.description || 'Check out this amazing project',
+            link: item.link || '#',
+            tags: item.tags || item.technologies?.slice(0, 2) || ['Web', 'Design'], // Use tags or first 2 technologies as tags
+            featured: item.featured || false
+          }));
+        setPortfolioItems(activeItems);
+      } catch (err) {
+        console.error('Error fetching portfolio items:', err);
+        setError('Failed to load portfolio items. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioItems();
+  }, [initialPortfolioItems]);
+
+  if (loading && !portfolioItems.length) {
+    return (
+      <section id="portfolio" className="py-20 bg-slate-50 dark:bg-slate-900">
+        <div className="container mx-auto px-6 max-w-7xl text-center">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+            <span className="ml-2 text-lg">Loading portfolio...</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="portfolio" className="py-20 bg-slate-50 dark:bg-slate-900">
+        <div className="container mx-auto px-6 max-w-7xl text-center">
+          <div className="text-red-500">{error}</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!portfolioItems.length) {
+    return (
+      <section id="portfolio" className="py-20 bg-slate-50 dark:bg-slate-900">
+        <div className="container mx-auto px-6 max-w-7xl text-center">
+          <p>No portfolio items available at the moment.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       id="portfolio"
@@ -69,56 +159,26 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData,
           subtitle="Explore our creative endeavors and successful project deliveries."
         />
 
-       
-        {/* Fade effects */}
-      
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none" />
-        
         <div className="relative mt-12 md:mt-16 z-10">
-          <div className="portfolio-marquee-container flex flex-col md:flex-row gap-4 md:gap-6 h-[600px] md:h-[750px] overflow-hidden group relative">
-            {/* Absolute CTA Button */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30">
-              <Button asChild size="lg" className="group relative overflow-hidden px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold transform hover:scale-105">
-                <Link to="/portfolio">
-                  View More Projects
-                  <ArrowRight size={16} className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </Button>
+          {/* Simple grid layout with fade effect at the bottom */}
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {portfolioItems.map((item) => (
+                <PortfolioCard key={item._id || item.title} item={item} />
+              ))}
             </div>
-            {[0, 1, 2].map((colIndex) => {
-              const itemsPerColumn = Math.ceil(portfolioItemsData.length / 3);
-              let columnItems = portfolioItemsData.slice(colIndex * itemsPerColumn, (colIndex + 1) * itemsPerColumn);
-              if (columnItems.length === 0 && portfolioItemsData.length > 0) {
-                columnItems = [...portfolioItemsData];
-              }
-              // Duplicate for seamless scrolling
-              const minScrollItems = 10;
-              const duplications = columnItems.length > 0 ? Math.max(4, Math.ceil(minScrollItems / columnItems.length)) : 0;
-              const displayItems = duplications > 0 ? Array(duplications).fill(columnItems).flat() : [];
-              const animationClass = colIndex === 1 
-                ? 'animate-marquee-vertical-normal' 
-                : 'animate-marquee-vertical-reverse';
-              // Animation duration based on items
-              const estimatedCardHeightWithGap = 260;
-              const scrollableContentHeight = displayItems.length / 2 * estimatedCardHeightWithGap;
-              const desiredSpeed = 40;
-              const animationDuration = displayItems.length > 0 ? Math.max(30, scrollableContentHeight / desiredSpeed) : 60;
-              return (
-                <div key={colIndex} className="flex-1 h-full overflow-hidden">
-                    <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none" />
-                  <div 
-                    className={`flex flex-col gap-4 md:gap-6 ${animationClass} h-full portfolio-marquee-column`} 
-                    style={{ animationDuration: `${animationDuration}s` }}
-                  >
-                    {displayItems.map((item, itemIndex) => (
-                      <div key={`${colIndex}-${itemIndex}-${item.title}-${item.image}`}> 
-                        <PortfolioCard item={item} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            {/* Fade effect only for the grid */}
+            <div className="absolute -bottom-6 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 pointer-events-none"></div>
+          </div>
+          
+          {/* View More Button - outside the fade effect */}
+          <div className="mt-16 text-center relative z-10">
+            <Button asChild size="lg" className="group relative overflow-hidden px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold transform hover:scale-105">
+              <Link to="/portfolio">
+                View More Projects
+                <ArrowRight size={16} className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

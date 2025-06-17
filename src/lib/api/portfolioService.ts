@@ -24,27 +24,15 @@ export const createPortfolioItem = async (data: PortfolioFormData): Promise<Port
   try {
     console.log('Starting createPortfolioItem with data:', data);
     
-    if (!data._file && !data.image) {
-      throw new Error('Image file is required');
-    }
-
     // Create FormData for file upload
     const formData = new FormData();
-  
+    
     // Extract file if exists
     const file = data._file;
     
-    // Prepare the data object with proper type handling
-    const payload = {
-      title: data.title,
-      description: data.description,
-      category: data.category,
-      year: data.year,
-      link: data.link || undefined,
-      featured: data.featured || false,
-      isActive: data.isActive !== false, // Default to true if not provided
-    };
-
+    // Set default year to current year if not provided
+    const year = data.year || new Date().getFullYear().toString();
+    
     // Handle technologies and tags as arrays
     const technologies = Array.isArray(data.technologies) 
       ? data.technologies 
@@ -58,28 +46,34 @@ export const createPortfolioItem = async (data: PortfolioFormData): Promise<Port
         ? data.tags.split(',').map(t => t.trim()).filter(Boolean)
         : [];
     
-    // Append all fields to form data
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-
-    // Append arrays
+    // Append all required fields
+    formData.append('title', data.title);
+    formData.append('description', data.description);
+    formData.append('category', data.category);
+    formData.append('year', year);
+    
+    // Append optional fields if they exist
+    if (data.link) formData.append('link', data.link);
+    formData.append('featured', String(data.featured || false));
+    formData.append('isActive', String(data.isActive !== false));
+    
+    // Append technologies and tags
     technologies.forEach(tech => {
       if (tech) formData.append('technologies', tech);
     });
-
+    
     tags.forEach(tag => {
       if (tag) formData.append('tags', tag);
     });
     
-    // Handle file upload
+    // Handle file upload - ensure we're using the correct field name 'image' for the backend
     if (file) {
       formData.append('image', file);
     } else if (data.image) {
       // If no new file but image URL exists, use that
       formData.append('image', data.image);
+    } else {
+      throw new Error('Image is required');
     }
     
     console.log('Sending form data to server');

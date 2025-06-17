@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { SEO } from "@/components/SEO";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -23,18 +23,22 @@ const queryClient = new QueryClient();
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
-  if (isLoading) {
+  // Show loading state while checking auth status
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <span className="ml-2">Loading...</span>
       </div>
     );
   }
 
+  // If not authenticated, redirect to login with return location
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -46,24 +50,37 @@ import TeamPage from "./pages/admin/TeamPage";
 import TestimonialsPage from "./pages/admin/TestimonialsPage";
 import SubscriptionsPage from "./pages/admin/SubscriptionsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
+import ContactMessagesPage from "./pages/admin/ContactMessagesPage";
+import FinancePage from "./pages/admin/FinancePage";
 
 // Admin Routes Component
-const AdminRoutes: React.FC = () => (
-  <ProtectedRoute>
+const AdminRoutes: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  return (
     <AdminLayout>
       <Routes>
-        <Route index element={<Dashboard />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="portfolio" element={<PortfolioPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="team" element={<TeamPage />} />
         <Route path="testimonials" element={<TestimonialsPage />} />
         <Route path="subscriptions" element={<SubscriptionsPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        <Route path="*" element={<Navigate to="/admin" replace />} />
+        <Route path="messages" element={<ContactMessagesPage />} />
+        <Route path="finance" element={<FinancePage />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </AdminLayout>
-  </ProtectedRoute>
-);
+  );
+};
 
 const App = () => {
   return (
@@ -133,8 +150,25 @@ const App = () => {
                   } />
 
                   {/* Admin Routes */}
-                  <Route path="/admin/login" element={<Login />} />
-                  <Route path="/admin/*" element={<AdminRoutes />} />
+                  <Route path="/admin/login" 
+                    element={
+                      <>
+                        <SEO 
+                          title="Admin Login" 
+                          description="Access the Frooxi admin dashboard" 
+                        />
+                        <Login />
+                      </>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/*" 
+                    element={
+                      <ProtectedRoute>
+                        <AdminRoutes />
+                      </ProtectedRoute>
+                    } 
+                  />
 
                   {/* 404 Route */}
                   <Route path="*" element={

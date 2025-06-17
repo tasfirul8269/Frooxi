@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { submitContactForm } from '@/lib/api/contactService';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +17,13 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedBudget, setSelectedBudget] = useState<string>('');
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     phone: '',
     message: ''
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [customBudget, setCustomBudget] = useState('');
   const [showCustomBudget, setShowCustomBudget] = useState(false);
@@ -57,14 +61,49 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
     }));
   };
 
+  const submitMutation = useMutation({
+    mutationFn: async (formData: any) => {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        subject: `New message from ${formData.name} - ${selectedServices.join(', ') || 'General Inquiry'}`,
+        message: `Phone: ${formData.phone}\n\nMessage: ${formData.message}\n\nServices: ${selectedServices.join(', ') || 'Not specified'}\nBudget: ${selectedBudget === 'custom' ? customBudget : selectedBudget || 'Not specified'}`
+      };
+      return await submitContactForm(payload);
+    },
+    onSuccess: () => {
+      // Reset form on success
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        message: ''
+      });
+      setSelectedServices([]);
+      setSelectedBudget('');
+      setCustomBudget('');
+      setShowCustomBudget(false);
+      
+      toast.success('Message sent successfully!', {
+        description: 'We will get back to you soon.',
+        duration: 5000,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to send message', {
+        description: error.message || 'Please try again later.',
+        duration: 5000,
+      });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log({
-      ...formData,
-      services: selectedServices,
-      budget: selectedBudget === 'custom' ? customBudget : selectedBudget
-    });
+    setIsSubmitting(true);
+    submitMutation.mutate(formData);
   };
 
   return (
@@ -96,80 +135,72 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
                 </div>
                 Send Us a Message
               </h3>
-              {/* First Row: First Name and Last Name */}
+              {/* First Row: Full Name */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1.5 flex items-center">
-                    <User className="w-4 h-4 mr-2 text-purple-600 dark:text-purple-400" />
-                    First Name
+                <div className="col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
+                    Full Name <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                    placeholder="John"
-                    className="w-full bg-background/50 dark:bg-gray-800/50 border border-input text-foreground placeholder-muted-foreground rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent backdrop-blur-sm transition-all duration-200 hover:border-purple-500/30 focus:bg-background/70 dark:focus:bg-gray-800/70"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-1.5 flex items-center">
-                    <span className="w-4 h-4 mr-2"></span>
-                    Last Name
-                  </label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                    placeholder="Doe"
-                    className="w-full bg-background/50 dark:bg-gray-800/50 border border-input text-foreground placeholder-muted-foreground rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent backdrop-blur-sm transition-all duration-200 hover:border-purple-500/30 focus:bg-background/70 dark:focus:bg-gray-800/70"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                      placeholder="John Doe"
+                    />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
               </div>
               
               {/* Second Row: Email and Phone */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5 flex items-center">
-                    <Mail className="w-4 h-4 mr-2 text-purple-600 dark:text-purple-400" />
-                    Email
+                  <label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-1">
+                    Email <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="your@email.com"
-                    className="w-full bg-background/50 dark:bg-gray-800/50 border border-input text-foreground placeholder-muted-foreground rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent backdrop-blur-sm transition-all duration-200 hover:border-purple-500/30 focus:bg-background/70 dark:focus:bg-gray-800/70"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                      placeholder="your@email.com"
+                    />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
                 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1.5 flex items-center">
-                    <Phone className="w-4 h-4 mr-2 text-purple-600 dark:text-purple-400" />
+                  <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-1">
                     Phone
                   </label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full bg-background/50 dark:bg-gray-800/50 border border-input text-foreground placeholder-muted-foreground rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent backdrop-blur-sm transition-all duration-200 hover:border-purple-500/30 focus:bg-background/70 dark:focus:bg-gray-800/70"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                      placeholder="+1 (555) 000-0000"
+                    />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
               </div>
               
               {/* Message Textarea */}
               <div className="mb-6">
-                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1.5 flex items-center">
-                  <MessageSquare className="w-4 h-4 mr-2 text-purple-600 dark:text-purple-400" />
-                  Your Message
+                <label htmlFor="message" className="block text-sm font-medium text-muted-foreground mb-1">
+                  Your Message <span className="text-red-500">*</span>
                 </label>
                 <Textarea
                   id="message"
@@ -177,20 +208,33 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
                   value={formData.message}
                   onChange={handleInputChange}
                   rows={5}
-                  className="w-full bg-background/50 dark:bg-gray-800/50 border border-input text-foreground placeholder-muted-foreground rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-transparent backdrop-blur-sm transition-all duration-200 hover:border-purple-500/30 focus:bg-background/70 dark:focus:bg-gray-800/70"
+                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
                   required
                 />
+                <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
               
               <div className="flex justify-center mt-6">
-                <Button
-                  type="submit"
-                  className="group w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-600/90 hover:to-indigo-600/90 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-background transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center space-x-2 relative overflow-hidden"
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+                  size="lg"
+                  disabled={isSubmitting}
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                  <Send className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                  <span className="relative z-10">Send Message</span>
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></span>
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send Message
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

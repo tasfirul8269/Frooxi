@@ -44,39 +44,77 @@ export const createPortfolio = async (req, res) => {
       description,
       category,
       technologies = [],
-      client,
-      projectUrl,
+      year,
+      link,
+      tags = [],
       featured = false,
       isActive = true
     } = req.body;
 
-    // Get image URL from Cloudinary upload
-    const imageUrl = req.file ? req.file.path : null;
+    // Check for required fields
+    if (!title || !description || !category || !year) {
+      return res.status(400).json({ 
+        msg: 'Title, description, category, and year are required' 
+      });
+    }
 
-    if (!imageUrl) {
+    let imageUrl = '';
+    
+    // Handle file upload if exists
+    if (req.file) {
+      try {
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'portfolio',
+          resource_type: 'auto'
+        });
+        imageUrl = result.secure_url;
+      } catch (uploadErr) {
+        console.error('Error uploading to Cloudinary:', uploadErr);
+        return res.status(500).json({ msg: 'Error uploading image' });
+      }
+    } else if (req.body.image) {
+      // If image is a URL (for existing images)
+      imageUrl = req.body.image;
+    } else {
       return res.status(400).json({ msg: 'Image is required' });
     }
 
-    // Ensure technologies is an array
-    const technologiesArray = Array.isArray(technologies) ? technologies : [technologies].filter(Boolean);
+    // Ensure arrays
+    const technologiesArray = Array.isArray(technologies) 
+      ? technologies 
+      : technologies.split(',').map(t => t.trim()).filter(Boolean);
+      
+    const tagsArray = Array.isArray(tags)
+      ? tags
+      : tags.split(',').map(t => t.trim()).filter(Boolean);
 
+    // Create new portfolio item
     const portfolio = new Portfolio({
       title,
       description,
-      imageUrl,
+      image: imageUrl, // Using 'image' field to match the model
       category,
+      year,
+      link: link || '',
       technologies: technologiesArray,
-      client,
-      projectUrl,
+      tags: tagsArray,
       featured: Boolean(featured),
       isActive: Boolean(isActive)
     });
 
     await portfolio.save();
-    res.status(201).json(portfolio);
+    
+    // Return the created portfolio with populated fields
+    const savedPortfolio = await Portfolio.findById(portfolio._id);
+    res.status(201).json(savedPortfolio);
+    
   } catch (err) {
     console.error('Error creating portfolio:', err);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ 
+      msg: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 

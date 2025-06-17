@@ -10,9 +10,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <MobileNav />
-      <div className="flex">
+      <div className="flex h-[calc(100vh-4rem)]">
         <AdminNav />
-        <div className="flex-1">
+        <div className="flex-1 overflow-auto">
           <main className="flex-1 p-4 md:p-8">
             {children || <Outlet />}
           </main>

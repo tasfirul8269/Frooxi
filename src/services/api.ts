@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// In production, this should be set to your production API URL
+const API_URL = import.meta.env.PROD 
+  ? 'https://frooxi-backend.onrender.com/api' 
+  : import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+console.log('API URL:', API_URL); // Debug log
 
 // Create axios instance with default config
 const api = axios.create({

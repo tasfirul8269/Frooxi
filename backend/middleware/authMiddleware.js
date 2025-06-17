@@ -34,7 +34,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
 // @desc    Authorize admin
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && req.user.isAdmin === true) {
     next();
   } else {
     res.status(403);
