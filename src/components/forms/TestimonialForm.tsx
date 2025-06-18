@@ -16,16 +16,16 @@ interface TestimonialFormProps {
 
 export function TestimonialForm({ testimonial, onSave, onCancel, isSubmitting }: TestimonialFormProps) {
   const [formData, setFormData] = useState({
-    author: testimonial?.author || '',
-    role: testimonial?.role || '',
-    company: testimonial?.company || '',
+    clientName: testimonial?.clientName || '',
+    clientPosition: testimonial?.clientPosition || '',
+    clientCompany: testimonial?.clientCompany || '',
     content: testimonial?.content || '',
     rating: testimonial?.rating || 5,
     featured: testimonial?.featured || false,
     isActive: testimonial?.isActive ?? true,
   });
   
-  const [previewImage, setPreviewImage] = useState(testimonial?.avatarUrl || '');
+  const [previewImage, setPreviewImage] = useState(testimonial?.imageUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -104,11 +104,11 @@ export function TestimonialForm({ testimonial, onSave, onCancel, isSubmitting }:
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="author">Author Name *</Label>
+              <Label htmlFor="clientName">Client Name *</Label>
               <Input
-                id="author"
-                name="author"
-                value={formData.author}
+                id="clientName"
+                name="clientName"
+                value={formData.clientName}
                 onChange={handleChange}
                 placeholder="John Doe"
                 required
@@ -116,11 +116,11 @@ export function TestimonialForm({ testimonial, onSave, onCancel, isSubmitting }:
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="role">Role *</Label>
+              <Label htmlFor="clientPosition">Position *</Label>
               <Input
-                id="role"
-                name="role"
-                value={formData.role}
+                id="clientPosition"
+                name="clientPosition"
+                value={formData.clientPosition}
                 onChange={handleChange}
                 placeholder="e.g., CEO, Marketing Director"
                 required
@@ -128,11 +128,11 @@ export function TestimonialForm({ testimonial, onSave, onCancel, isSubmitting }:
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="company">Company *</Label>
+              <Label htmlFor="clientCompany">Company *</Label>
               <Input
-                id="company"
-                name="company"
-                value={formData.company}
+                id="clientCompany"
+                name="clientCompany"
+                value={formData.clientCompany}
                 onChange={handleChange}
                 placeholder="Company Name"
                 required

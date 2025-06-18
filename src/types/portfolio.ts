@@ -1,4 +1,4 @@
-export type PortfolioCategory = 'Web Development' | 'Mobile Development' | 'UI/UX Design' | 'Graphic Design' | 'Other';
+export type PortfolioCategory = 'Web Development' | 'Mobile Development' | 'UI/UX Design' | 'Graphic Design' | 'Branding' | 'Other';
 
 export interface PortfolioItem {
   _id: string;

@@ -43,25 +43,24 @@ const ServicesSection: React.FC<ServicesSectionProps> = ({ servicesData, section
               style={{ animationDelay: `${index * 0.07}s` }}
             >
               <div className="bg-white dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 md:p-8 h-full flex flex-col hover:shadow-xl">
-                <div className="w-10 h-10 mb-5 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary-500 to-purple-500 text-white shadow-md">
-                  {React.cloneElement(service.icon as React.ReactElement, { className: 'w-6 h-6' })}
+                <div className="w-10 h-10 mb-5 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-400 dark:from-primary-500 dark:to-purple-500 text-white shadow-md">
+                  {React.cloneElement(service.icon as React.ReactElement, { 
+                    className: 'w-6 h-6 text-white',
+                    strokeWidth: 2 
+                  })}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{service.title}</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed flex-grow mb-4 line-clamp-3">{service.description}</p>
-                <Link to={`/services/${service.title.toLowerCase().replace(/\s+/g, '-')}`} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm inline-flex items-center group/link mt-auto self-start">
-                  Read more
-                  <ArrowRight size={14} className="ml-1.5 h-3.5 w-3.5 transform transition-transform duration-300 group-hover/link:translate-x-1" />
-                </Link>
+                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed flex-grow mb-4">{service.description}</p>
               </div>
             </div>
           ))}
         </div>
 
         <div className="text-center mt-12">
-          <Button asChild size="lg" className="group relative overflow-hidden px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold transform hover:scale-105">
-            <Link to="/services"> {/* Assuming a /services page exists or will be created */}
+          <Button asChild size="lg" className="group relative overflow-hidden px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold transform hover:scale-105">
+            <Link to="/services" className="group-hover:translate-x-0.5 transition-transform duration-300">
               View More Services
-              <ArrowRight size={16} className="ml-2 transition-transform duration-300 group-hover/link:translate-x-1" />
+              <ArrowRight size={16} className="ml-2 inline-block transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </Button>
         </div>

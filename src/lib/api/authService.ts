@@ -64,20 +64,19 @@ export const login = async (credentials: LoginCredentials): Promise<User> => {
   }
 };
 
-export const getCurrentUser = async (): Promise<Omit<User, 'token'>> => {
+export const getCurrentUser = async (): Promise<Omit<User, 'token'> | null> => {
   try {
-    // First try to get user from localStorage (for initial page load)
+    // First try to get user from localStorage
     const userFromStorage = localStorage.getItem('user');
+    const token = localStorage.getItem('authToken');
     
-    // If we have a user in localStorage, use it as a fallback while we fetch fresh data
-    let fallbackUser = null;
-    if (userFromStorage) {
-      try {
-        fallbackUser = JSON.parse(userFromStorage);
-      } catch (e) {
-        console.error('Error parsing user from localStorage:', e);
-      }
+    // If no token, return null
+    if (!token) {
+      return null;
     }
+    
+    // Set the auth header
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     
     // Try to fetch fresh user data
     try {
@@ -93,7 +92,7 @@ export const getCurrentUser = async (): Promise<Omit<User, 'token'>> => {
         }));
       }
       
-      return data.user || fallbackUser || null;
+      return data.user || null;
     } catch (error) {
       console.error('Error fetching user profile:', {
         message: error.message,
@@ -101,29 +100,42 @@ export const getCurrentUser = async (): Promise<Omit<User, 'token'>> => {
         code: error.code
       });
       
-      // If we have a fallback user, return it
-      if (fallbackUser) {
-        console.warn('Using fallback user data from localStorage');
-        return fallbackUser;
+      // If we have a fallback user, return it but don't clear auth state
+      if (userFromStorage) {
+        try {
+          return JSON.parse(userFromStorage);
+        } catch (e) {
+          console.error('Error parsing user from localStorage:', e);
+        }
       }
       
-      // If it's a 401, clear the token and redirect to login
+      // If it's a 401, clear auth state
       if (error.response?.status === 401) {
         localStorage.removeItem('authToken');
         delete api.defaults.headers.common['Authorization'];
-        window.location.href = '/admin/login';
       }
       
-      throw error;
+      return null;
     }
   } catch (error) {
     console.error('Error in getCurrentUser:', error);
-    throw error;
+    return null;
   }
 };
 
 export const logout = async (redirectToLogin: boolean = true): Promise<void> => {
   try {
+    // Only try to call the logout endpoint if we have a token
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        await api.post('/users/logout');
+      } catch (error) {
+        console.error('Logout API error (non-critical):', error);
+        // Continue with local logout even if API call fails
+      }
+    }
+    
     // Clear all user-related data from localStorage
     const itemsToRemove = [
       'authToken',
@@ -147,7 +159,10 @@ export const logout = async (redirectToLogin: boolean = true): Promise<void> => 
     
     console.log('User logged out successfully');
     
-    // Optional: Call the backend to invalidate the token
+    // Only redirect if requested
+    if (redirectToLogin) {
+      window.location.href = '/admin/login';
+    }
     try {
       await api.post('/users/logout');
     } catch (err) {

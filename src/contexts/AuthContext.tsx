@@ -25,6 +25,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -105,16 +106,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
+      // Only clear local storage if we're actually logging out
+      if (redirectToLogin) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
     }
   }, []);
 
   // Check for existing session on initial load
   const checkAuth = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
       const token = localStorage.getItem('authToken');
       if (!token) {
         setLoading(false);
-        // If we're not on the login page, redirect to login
         if (!location.pathname.includes('/admin/login') && location.pathname.startsWith('/admin')) {
           navigate('/admin/login', { 
             state: { from: location.pathname },
@@ -126,6 +134,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('Checking authentication status...');
       const userData = await getCurrentUser();
+      
+      if (!userData) {
+        // No user data and no token means auth failed
+        await handleLogout(false); // Don't redirect yet
+        if (location.pathname.startsWith('/admin') && !location.pathname.includes('/admin/login')) {
+          navigate('/admin/login', { 
+            state: { from: location.pathname },
+            replace: true
+          });
+        }
+        return;
+      }
+
       setUser(userData);
       
       // Schedule token refresh
@@ -139,10 +160,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      await handleLogout();
+      await handleLogout(false); // Don't redirect yet
       
-      // If we're not on the login page and auth check fails, redirect to login
-      if (!location.pathname.includes('/admin/login') && location.pathname.startsWith('/admin')) {
+      if (location.pathname.startsWith('/admin') && !location.pathname.includes('/admin/login')) {
         navigate('/admin/login', { 
           state: { from: location.pathname },
           replace: true
@@ -220,8 +240,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     loading,
     error,
+    token: user?.token || null,
     login,
-    logout,
+    logout: handleLogout,
     setError,
     isAuthenticated: !!user,
   };

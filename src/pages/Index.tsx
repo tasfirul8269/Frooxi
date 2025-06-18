@@ -14,7 +14,6 @@ import { TestimonialCard } from "@/components/testimonial-card";
 import ServicesSection, { ServiceItem } from "@/components/ServicesSection"; 
 import PortfolioSection, { PortfolioItemType } from "@/components/PortfolioSection"; 
 import SubscriptionSection from "../components/SubscriptionSection";
-import StatsSection, { StatItem } from "@/components/StatsSection"; 
 import TeamSection, { TeamMemberItem } from "@/components/TeamSection"; 
 import TestimonialsSection, { TestimonialItem } from "@/components/TestimonialsSection"; 
 import ContactSection from "@/components/ContactSection"; 
@@ -78,13 +77,6 @@ const testimonials: TestimonialItem[] = [
     role: "CEO",
     company: "Growth Dynamics"
   }
-];
-
-const stats: StatItem[] = [
-  { value: "250+", label: "Projects Completed" },
-  { value: "98%", label: "Client Satisfaction" },
-  { value: "15+", label: "Years Experience" },
-  { value: "24/7", label: "Support" }
 ];
 
 const teamMembers: TeamMemberItem[] = [
@@ -291,7 +283,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-gray-900">
+      <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-gray-900">
         <div className="absolute inset-0 z-0 opacity-10 dark:opacity-5">
           <div className="absolute inset-0 bg-grid-gray-200 dark:bg-grid-gray-800"></div>
         </div>
@@ -344,7 +336,15 @@ const Index = () => {
                 </button>
                 {/* Modal is now rendered at the root of the page for proper fixed overlay */}
                 <button 
-                  onClick={createRipple} 
+                  onClick={() => {
+                    const contactSection = document.getElementById('contact');
+                    if (contactSection) {
+                      window.scrollTo({
+                        top: contactSection.offsetTop - 80, // Adjust for header
+                        behavior: 'smooth'
+                      });
+                    }
+                  }} 
                   className="group flex items-center justify-center px-8 py-4 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-full bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300 relative overflow-hidden"
                 >
                   <Search className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
@@ -403,12 +403,6 @@ const Index = () => {
       />
       <SubscriptionSection 
         sectionRef={(el) => { if (sectionsRef.current) sectionsRef.current[2] = el; }} 
-      />
-
-      {/* Stats Section */}
-      <StatsSection 
-        statsData={stats}
-        sectionRef={(el) => { if (sectionsRef.current) sectionsRef.current[3] = el; }}
       />
 
       {/* Team Section */}

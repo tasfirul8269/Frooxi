@@ -45,6 +45,12 @@ const navItems = [
     badge: true
   },
   {
+    title: "Consultations",
+    href: "/admin/consultations",
+    icon: MessageSquare,
+    badge: true
+  },
+  {
     title: "Team",
     href: "/admin/team",
     icon: UsersIcon

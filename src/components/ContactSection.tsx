@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { SectionHeading } from './section-heading';
 import { Mail, Phone, MapPin, Clock, User, Smartphone, MessageSquare, DollarSign, Send, Layers } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 interface ContactSectionProps {
   sectionRef: (el: HTMLElement | null) => void;
@@ -126,125 +127,16 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
           subtitleClassName="text-muted-foreground max-w-2xl mx-auto"
         />
         
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <form onSubmit={handleSubmit} className="lg:col-span-5 space-y-4 transform transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl hover:shadow-purple-500/10">
-            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl shadow-lg shadow-purple-500/10 dark:shadow-purple-900/10">
-              <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 mb-4 flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 flex items-center justify-center mr-2">
-                  <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                Send Us a Message
-              </h3>
-              {/* First Row: Full Name */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="col-span-2">
-                  <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
-                      placeholder="John Doe"
-                    />
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Second Row: Email and Phone */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-1">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
-                      placeholder="your@email.com"
-                    />
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-1">
-                    Phone
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Message Textarea */}
-              <div className="mb-6">
-                <label htmlFor="message" className="block text-sm font-medium text-muted-foreground mb-1">
-                  Your Message <span className="text-red-500">*</span>
-                </label>
-                <Textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  rows={5}
-                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
-                  required
-                />
-                <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-              
-              <div className="flex justify-center mt-6">
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
-                  size="lg"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Send Message
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </form>
           
-          <div className="lg:col-span-7 space-y-6">
+          
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-10 gap-5 items-start glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl shadow-lg shadow-purple-500/10 dark:shadow-purple-900/10 ">
+         
+          
+          <div className="lg:col-span-4 space-y-6">
             {/* Services Card */}
-            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl shadow-lg shadow-purple-500/10 dark:shadow-purple-900/10">
-              <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 mb-4 flex items-center">
-                <Layers className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
+            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl ">
+              <h3 className="text-lg font-bold text-black dark:text-white mb-4 flex items-center">
+                <Layers className="w-5 h-5 mr-2 text-black dark:text-white" />
                 Services Needed
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -267,9 +159,9 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
             </div>
 
             {/* Budget Card */}
-            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl shadow-lg shadow-purple-500/10 dark:shadow-purple-900/10">
-              <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 mb-4 flex items-center">
-                <DollarSign className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
+            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl ">
+              <h3 className="text-lg font-bold text-black dark:text-white mb-4 flex items-center">
+                <DollarSign className="w-5 h-5 mr-2 text-black dark:text-white" />
                 Project Budget
               </h3>
               <div className="space-y-3">
@@ -308,34 +200,22 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
               </div>
             </div>
 
-            {/* Contact Info Card */}
-            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl shadow-lg shadow-purple-500/10 dark:shadow-purple-900/10">
-              <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 mb-4 flex items-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 flex items-center justify-center mr-2">
+  {/* Contact Info Card */}
+  <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl ">
+              <h3 className="text-lg font-bold text-black dark:text-white mb-4 flex items-center">
+                {/* <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 flex items-center justify-center mr-2">
                   <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                </div>
+                </div> */}
                 Contact Information
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-6 ">
                 <div className="flex items-start group">
                   <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 backdrop-blur-sm flex items-center justify-center border border-border/50 group-hover:border-purple-500/30 transition-all duration-300">
-                    <MapPin className="w-5 h-5 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-sm font-medium text-foreground">Our Location</h4>
-                    <p className="mt-1 text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 hover:from-foreground hover:to-purple-600 dark:hover:from-white dark:hover:to-purple-200 transition-colors">
-                      123 Tech Street, Silicon Valley, CA 94025
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start group">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 backdrop-blur-sm flex items-center justify-center border border-border/50 group-hover:border-purple-500/30 transition-all duration-300">
-                    <Mail className="w-5 h-5 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+                    <Mail className="w-5 h-5 text-black dark:text-white group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="ml-4">
                     <h4 className="text-sm font-medium text-foreground">Email Us</h4>
-                    <a href="mailto:info@frooxi.com" className="mt-1 text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 hover:from-foreground hover:to-purple-600 dark:hover:from-white dark:hover:to-purple-200 transition-colors">
+                    <a href="mailto:info@frooxi.com" className="mt-1 text-sm text-black/50 dark:text-white hover:text-black dark:hover:text-white transition-colors">
                       info@frooxi.com
                     </a>
                   </div>
@@ -343,18 +223,131 @@ const ContactSection: React.FC<ContactSectionProps> = ({ sectionRef }) => {
                 
                 <div className="flex items-start group">
                   <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 backdrop-blur-sm flex items-center justify-center border border-border/50 group-hover:border-purple-500/30 transition-all duration-300">
-                    <Phone className="w-5 h-5 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+                    <FaWhatsapp className="w-5 h-5 text-black dark:text-white group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="ml-4">
-                    <h4 className="text-sm font-medium text-foreground">Call Us</h4>
-                    <a href="tel:+11234567890" className="mt-1 text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-300 dark:to-indigo-300 hover:from-foreground hover:to-purple-600 dark:hover:from-white dark:hover:to-purple-200 transition-colors">
+                    <h4 className="text-sm font-medium text-foreground">WhatsApp</h4>
+                    <a href="tel:+11234567890" className="mt-1 text-sm text-black/50 dark:text-white hover:text-black dark:hover:text-white transition-colors">
                       +1 (123) 456-7890
                     </a>
                   </div>
                 </div>
               </div>
             </div>
+          
           </div>
+          <form onSubmit={handleSubmit} className="lg:col-span-6 space-y-4 transform transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl hover:shadow-purple-500/10">
+            <div className="glass-card p-6 rounded-2xl border border-border/50 bg-background/80 dark:bg-gradient-to-br dark:from-gray-800/30 dark:to-gray-900/50 backdrop-blur-xl ">
+              <h3 className="text-lg font-bold text-black dark:text-white mb-4 flex items-center">
+                <div className="w-8 h-8 rounded-full  flex items-center justify-center mr-2">
+                  <MessageSquare className="w-5 h-5 text-black dark:text-white" />
+                </div>
+                Send Us a Message
+              </h3>
+              {/* First Row: Full Name */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                      placeholder="John Doe"
+                    />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Second Row: Email and Phone */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-1">
+                    Email 
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                      placeholder="your@email.com"
+                    />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-1">
+                    Phone
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                      placeholder="+1 (555) 000-0000"
+                    />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Message Textarea */}
+              <div className="mb-6">
+                <label htmlFor="message" className="block text-sm font-medium text-muted-foreground mb-1">
+                  Your Message
+                </label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  rows={5}
+                  className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                  required
+                />
+                {/* <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /> */}
+              </div>
+              
+              <div className="flex justify-center mt-6">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+                  size="lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send Message
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
     </section>
