@@ -15,15 +15,29 @@ export interface Consultation {
   name: string;
   email: string;
   phone?: string;
-  message?: string;
-  status: ConsultationStatus;
-  projectType?: string;
+  location: string;
+  whatsapp: string;
+  website?: string;
+  projectType: string;
+  projectDetails: string;
+  message: string;
   budget?: string;
-  location?: string;
-  preferredContact?: string;
-  notes?: Note[];
+  preferredContact: string;
+  status: ConsultationStatus;
+  source: string;
   createdAt: string;
   updatedAt: string;
+  notes?: Array<{
+    content: string;
+    addedAt: string;
+    addedBy: string;
+    _id: string;
+  }>;
+  metadata: {
+    ipAddress: string;
+    userAgent: string;
+    referrer: string;
+  };
 }
 
 export interface GetConsultationsParams {

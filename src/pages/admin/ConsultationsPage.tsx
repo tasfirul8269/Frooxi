@@ -1,34 +1,43 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  getConsultations, 
-  updateConsultationStatus, 
-  addConsultationNote,
-  type Consultation,
-  type ConsultationStatus 
-} from '@/lib/api/consultationService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { Search, Filter, Plus, MessageSquare, Calendar, Mail, Phone, MapPin, Globe, Clock, User, X, Check, Clock3, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
-// Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { ConsultationCard } from '@/components/ConsultationCard';
-import { ConsultationDetailsModal } from '@/components/ConsultationDetailsModal';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
-const statusColors: Record<ConsultationStatus, string> = {
-  pending: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  contacted: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  in_progress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-};
+import { Consultation, ConsultationStatus, GetConsultationsParams, PaginatedResponse } from '@/types/consultation';
+import { cn } from '@/lib/utils';
+import { getConsultations, updateConsultationStatus, addConsultationNote } from '@/lib/api/consultations';
 
-const statusOptions: { value: ConsultationStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'All Statuses' },
+const statusVariant = {
+  pending: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
+  contacted: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
+  in_progress: 'bg-purple-100 text-purple-800 hover:bg-purple-200',
+  completed: 'bg-green-100 text-green-800 hover:bg-green-200',
+  cancelled: 'bg-red-100 text-red-800 hover:bg-red-200',
+} as const;
+
+const statusIcons = {
+  pending: <Clock3 className="h-4 w-4" />,
+  contacted: <MessageSquare className="h-4 w-4" />,
+  in_progress: <Loader2 className="h-4 w-4 animate-spin" />,
+  completed: <CheckCircle className="h-4 w-4" />,
+  cancelled: <XCircle className="h-4 w-4" />,
+} as const;
+
+const statusOptions: { value: ConsultationStatus; label: string }[] = [
   { value: 'pending', label: 'Pending' },
   { value: 'contacted', label: 'Contacted' },
   { value: 'in_progress', label: 'In Progress' },
@@ -36,422 +45,444 @@ const statusOptions: { value: ConsultationStatus | 'all'; label: string }[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
-const ConsultationsPage = () => {
-  const { token } = useAuth();
-  
-  // State
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Pagination
+export default function ConsultationsPage() {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
-  
-  // Filters
   const [statusFilter, setStatusFilter] = useState<ConsultationStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Selected consultation
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
-  const [noteText, setNoteText] = useState('');
-  
-  // Notes state
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const [isAddingNote, setIsAddingNote] = useState(false);
-  // Form state
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Fetch consultations
-  const fetchConsultations = async () => {
-    if (!token) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params = {
-        page,
-        limit,
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(searchQuery && { search: searchQuery }),
-      };
-      
-      const response = await getConsultations(params);
-      setConsultations(response.data);
-      setTotal(response.total);
-    } catch (err) {
-      console.error('Error fetching consultations:', err);
-      setError('Failed to load consultations. Please try again.');
-      toast.error('Failed to load consultations');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle status update
-  const handleStatusUpdate = async (consultationId: string, newStatus: string) => {
-    if (!token) return;
-    
-    try {
-      setIsUpdatingStatus(true);
-      const { data: updatedConsultation } = await updateConsultationStatus(
-        consultationId, 
-        newStatus as ConsultationStatus
-      );
-      
-      // Update the local state
-      setConsultations(prev => 
-        prev.map(consultation => 
-          consultation._id === consultationId 
-            ? updatedConsultation 
-            : consultation
-        )
-      );
-      
-      // If the updated consultation is the selected one, update it as well
-      if (selectedConsultation?._id === consultationId) {
-        setSelectedConsultation(updatedConsultation);
-      }
-      
-      toast.success('Status updated successfully');
-    } catch (err) {
-      console.error('Error updating status:', err);
-      toast.error('Failed to update status');
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
-
-  // Handle add note
-  const handleAddNote = async () => {
-    if (!selectedConsultation || !noteText.trim() || !token) return;
-    
-    try {
-      setIsSubmittingNote(true);
-      const { data: updatedConsultation } = await addConsultationNote(
-        selectedConsultation._id, 
-        noteText
-      );
-      
-      // Update the local state
-      setConsultations(prev => 
-        prev.map(consultation => 
-          consultation._id === selectedConsultation._id 
-            ? updatedConsultation 
-            : consultation
-        )
-      );
-      
-      // Update the selected consultation
-      setSelectedConsultation(updatedConsultation);
-      setNoteText('');
-      
-      toast.success('Note added successfully');
-    } catch (err) {
-      console.error('Error adding note:', err);
-      toast.error('Failed to add note');
-    } finally {
-      setIsSubmittingNote(false);
-    }
-  };
-
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  // Handle status filter change
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value as ConsultationStatus | 'all');
-    setPage(1); // Reset to first page when filter changes
-  };
-
-  // Fetch consultations when filters or pagination changes
-  useEffect(() => {
-    fetchConsultations();
-  }, [statusFilter, searchQuery, page]);
-
-  // Check if user is admin
-  useEffect(() => {
-    if (user && !user.isAdmin) {
-      navigate('/');
-    }
-  }, [user, navigate]);
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/admin/login');
-      return;
-    }
-    fetchConsultations();
-  }, [token, navigate]);
-
-  const filteredConsultations = consultations.filter(consultation => {
-    const matchesStatus = statusFilter === 'all' || consultation.status === statusFilter;
-    const matchesSearch = searchQuery === '' || 
-      consultation.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      consultation.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (consultation.phone && consultation.phone.includes(searchQuery));
-    
-    return matchesStatus && matchesSearch;
+  const { data, isLoading, isError } = useQuery<PaginatedResponse<Consultation>>({
+    queryKey: ['consultations', { page, status: statusFilter, search: searchQuery }],
+    queryFn: () => getConsultations({ 
+      page, 
+      limit: 10, 
+      ...(statusFilter !== 'all' && { status: statusFilter }),
+      ...(searchQuery && { search: searchQuery })
+    }),
+    keepPreviousData: true,
   });
 
-  if (loading && consultations.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading consultations...</p>
-        </div>
-      </div>
-    );
-  }
+  // Update status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ConsultationStatus }) => 
+      updateConsultationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      toast.success('Status updated successfully');
+      setIsUpdatingStatus(false);
+    },
+    onError: (error) => {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+      setIsUpdatingStatus(false);
+    }
+  });
 
-  if (error) {
+  // Add note mutation
+  const addNoteMutation = useMutation({
+    mutationFn: ({ id, note }: { id: string; note: string }) => 
+      addConsultationNote(id, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      setNewNote('');
+      toast.success('Note added successfully');
+    },
+    onError: (error) => {
+      console.error('Error adding note:', error);
+      toast.error('Failed to add note');
+    }
+  });
+
+  const handleStatusUpdate = (status: ConsultationStatus) => {
+    if (!selectedConsultation) return;
+    setIsUpdatingStatus(true);
+    updateStatusMutation.mutate({ id: selectedConsultation._id, status });
+  };
+
+  const handleAddNote = () => {
+    if (!selectedConsultation || !newNote.trim()) return;
+    addNoteMutation.mutate({ id: selectedConsultation._id, note: newNote });
+  };
+
+  const openDetails = (consultation: Consultation) => {
+    setSelectedConsultation(consultation);
+    setIsDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedConsultation(null);
+    setNewNote('');
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  };
+
+  if (isError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Error Loading Consultations</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <Button onClick={fetchConsultations}>Retry</Button>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <p className="text-red-500">Error loading consultations. Please try again later.</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Consultations</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage and track consultation requests
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Input
-              type="text"
-              placeholder="Search consultations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-            <svg
-              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    <div className="container mx-auto py-8">
+      <div className="flex flex-col space-y-4 mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Consultation Requests</h1>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                className="pl-10 w-64"
+                placeholder="Search by name, email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </svg>
+            </div>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ConsultationStatus | 'all')}>
+              <SelectTrigger className="w-48">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="contacted">Contacted</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="converted">Converted</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
+
+        <Card>
+          <CardContent className="p-0">
+            <ScrollArea className="h-[calc(100vh-250px)]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Project Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Requested</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    Array(5).fill(0).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell className="text-right">
+                          <Skeleton className="h-8 w-16 ml-auto" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : data?.data?.length ? (
+                    data.data.map((consultation) => (
+                      <TableRow key={consultation._id}>
+                        <TableCell className="font-medium">{consultation.name}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col space-y-1">
+                            <span className="text-sm text-gray-600">{consultation.email}</span>
+                            {consultation.phone && (
+                              <span className="text-sm text-gray-500">{consultation.phone}</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{consultation.projectType}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={cn(
+                              'inline-flex items-center gap-1',
+                              statusVariant[consultation.status]
+                            )}
+                          >
+                            {statusIcons[consultation.status]}
+                            {consultation.status.replace('_', ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatDate(consultation.createdAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => openDetails(consultation)}
+                          >
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        No consultation requests found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {data && data.totalPages > 1 && (
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (page > 1) setPage(page - 1);
+                  }}
+                  className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+              {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
+                // Show pages around current page
+                let pageNum = page <= 3 ? i + 1 : 
+                  page >= data.totalPages - 2 ? data.totalPages - 4 + i :
+                  page - 2 + i;
+                
+                if (pageNum < 1 || pageNum > data.totalPages) return null;
+                
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(pageNum);
+                      }}
+                      isActive={pageNum === page}
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (page < (data?.totalPages || 1)) setPage(page + 1);
+                  }}
+                  className={page === data?.totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Consultation List */}
-        <div className="lg:col-span-1 space-y-4">
-          {filteredConsultations.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <p className="text-gray-500 dark:text-gray-400">No consultations found</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
-              {filteredConsultations.map((consultation) => (
-                <Card 
-                  key={consultation._id}
-                  className={`cursor-pointer transition-all hover:shadow-lg ${
-                    selectedConsultation?._id === consultation._id 
-                      ? 'ring-2 ring-blue-500 border-blue-500' 
-                      : ''
-                  }`}
-                  onClick={() => setSelectedConsultation(consultation)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{consultation.name}</CardTitle>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {consultation.email}
-                        </p>
-                      </div>
-                      <Badge className={statusColors[consultation.status]}>
-                        {consultation.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                      <span>{consultation.projectType}</span>
-                      <span>{format(new Date(consultation.createdAt), 'MMM d, yyyy')}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Consultation Details */}
-        <div className="lg:col-span-2">
-          {selectedConsultation ? (
-            <Card className="h-full">
-              <CardHeader className="border-b">
-                <div className="flex justify-between items-start">
+      {/* Consultation Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedConsultation && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>{selectedConsultation.name}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {selectedConsultation.email}
-                      {selectedConsultation.phone && ` • ${selectedConsultation.phone}`}
-                    </CardDescription>
+                    <DialogTitle className="text-2xl">{selectedConsultation.name}</DialogTitle>
+                    <DialogDescription>
+                      Requested on {formatDate(selectedConsultation.createdAt)}
+                    </DialogDescription>
                   </div>
-                  <Select
-                    value={selectedConsultation.status}
-                    onValueChange={(value) => handleStatusUpdate(selectedConsultation._id, value as Status)}
-                    disabled={isUpdating}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="converted">Converted</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Project Type</p>
-                    <p className="capitalize">{selectedConsultation.projectType}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Budget</p>
-                    <p>{selectedConsultation.budget || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Preferred Contact</p>
-                    <p className="capitalize">{selectedConsultation.preferredContact.replace('_', ' ')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</p>
-                    <p>{format(new Date(selectedConsultation.createdAt), 'MMM d, yyyy h:mm a')}</p>
+                  <div className="flex items-center space-x-2">
+                    <Select 
+                      value={selectedConsultation.status} 
+                      onValueChange={(value) => handleStatusUpdate(value as ConsultationStatus)}
+                      disabled={isUpdatingStatus}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </CardHeader>
+              </DialogHeader>
               
-              <CardContent className="pt-6">
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium mb-2">Message</h3>
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <p className="whitespace-pre-line">
-                      {selectedConsultation.message || 'No message provided.'}
-                    </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Client Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Client Information</h3>
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <Avatar>
+                        <AvatarFallback>
+                          {selectedConsultation.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{selectedConsultation.name}</p>
+                        <p className="text-sm text-gray-500">Client</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                        <a href={`mailto:${selectedConsultation.email}`} className="text-blue-600 hover:underline">
+                          {selectedConsultation.email}
+                        </a>
+                      </div>
+                      {selectedConsultation.phone && (
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                          <a href={`tel:${selectedConsultation.phone}`} className="text-gray-700">
+                            {selectedConsultation.phone}
+                          </a>
+                        </div>
+                      )}
+                      {selectedConsultation.whatsapp && (
+                        <div className="flex items-center">
+                          <MessageSquare className="h-4 w-4 mr-2 text-green-600" />
+                          <span className="text-gray-700">{selectedConsultation.whatsapp}</span>
+                        </div>
+                      )}
+                      {selectedConsultation.website && (
+                        <div className="flex items-center">
+                          <Globe className="h-4 w-4 mr-2 text-gray-400" />
+                          <a 
+                            href={selectedConsultation.website.startsWith('http') ? selectedConsultation.website : `https://${selectedConsultation.website}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {selectedConsultation.website}
+                          </a>
+                        </div>
+                      )}
+                      <div className="flex items-start">
+                        <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700">{selectedConsultation.location || 'Not specified'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-4">Notes</h3>
-                  
-                  <div className="space-y-4 mb-6">
-                    {selectedConsultation.notes && selectedConsultation.notes.length > 0 ? (
-                      selectedConsultation.notes.map((note, index) => (
-                        <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                          <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            <span>Added by {note.addedBy}</span>
-                            <span>{format(new Date(note.addedAt), 'MMM d, yyyy h:mm a')}</span>
-                          </div>
-                          <p className="whitespace-pre-line">{note.content}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-center py-4">No notes yet.</p>
+
+                {/* Project Details */}
+                <div className="space-y-4 md:col-span-2">
+                  <h3 className="text-lg font-medium">Project Details</h3>
+                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <h4 className="font-medium mb-1">Project Type</h4>
+                      <p className="text-gray-700">{selectedConsultation.projectType}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-1">Project Details</h4>
+                      <p className="text-gray-700 whitespace-pre-line">
+                        {selectedConsultation.projectDetails || 'No details provided.'}
+                      </p>
+                    </div>
+                    
+                    {selectedConsultation.budget && (
+                      <div>
+                        <h4 className="font-medium mb-1">Budget</h4>
+                        <p className="text-gray-700">{selectedConsultation.budget}</p>
+                      </div>
                     )}
+                    
+                    <div>
+                      <h4 className="font-medium mb-1">Preferred Contact Method</h4>
+                      <p className="text-gray-700 capitalize">
+                        {selectedConsultation.preferredContact.replace('_', ' ')}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-1">Source</h4>
+                      <p className="text-gray-700 capitalize">
+                        {selectedConsultation.source || 'Website'}
+                      </p>
+                    </div>
                   </div>
+                </div>
+
+                {/* Notes Section */}
+                <div className="md:col-span-3 space-y-4">
+                  <h3 className="text-lg font-medium">Notes</h3>
                   
+                  {/* Add Note */}
                   <div className="space-y-2">
                     <Textarea
-                      placeholder="Add a note..."
+                      placeholder="Add a note about this consultation..."
                       value={newNote}
                       onChange={(e) => setNewNote(e.target.value)}
                       rows={3}
                     />
                     <div className="flex justify-end">
                       <Button 
-                        onClick={handleAddNote} 
-                        disabled={!newNote.trim() || isUpdating}
+                        onClick={handleAddNote}
+                        disabled={!newNote.trim() || addNoteMutation.isLoading}
                       >
-                        {isUpdating ? 'Adding...' : 'Add Note'}
+                        {addNoteMutation.isLoading ? 'Adding...' : 'Add Note'}
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Notes List */}
+                  {selectedConsultation.notes?.length ? (
+                    <div className="space-y-4">
+                      {selectedConsultation.notes.map((note) => (
+                        <div key={note._id} className="p-4 bg-white border rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center space-x-2">
+                              <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                <User className="h-4 w-4 text-gray-500" />
+                              </div>
+                              <div>
+                                <p className="font-medium">
+                                  {note.addedBy.name || 'System'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {formatDate(note.addedAt)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="mt-2 text-gray-700 whitespace-pre-line">
+                            {note.content}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No notes yet. Add your first note above.</p>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
-              <div className="text-center p-8">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
-                  <svg
-                    className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
-                  No consultation selected
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Select a consultation from the list to view details
-                </p>
               </div>
-            </div>
+            </>
           )}
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default ConsultationsPage;
+}
