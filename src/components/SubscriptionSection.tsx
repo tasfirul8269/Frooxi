@@ -441,9 +441,7 @@ const SubscriptionSection: React.FC = () => {
                   
                   {/* Popular badge */}
                   {isPopular && (
-                    <div className="absolute -top-3 right-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg z-10">
-                      Most Popular
-                    </div>
+                    <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-6 py-1 rounded-full shadow-lg backdrop-blur-md border border-white/20 dark:border-white/10 animate-pulse">Recommended</span>
                   )}
                   
                   {/* Subtle glow effect on hover */}
@@ -548,8 +546,6 @@ const SubscriptionSection: React.FC = () => {
     );
   }
 
-
-
   // No plans available state with helpful message
   if (plans.length === 0) {
     return (
@@ -575,294 +571,142 @@ const SubscriptionSection: React.FC = () => {
     );
   }
 
-  // Main return with checkout dialog and pricing section
+  // Main return with new design
   return (
-    <section id="pricing" className="relative min-h-screen py-20 overflow-hidden bg-gradient-to-br from-gray-50 via-indigo-50 to-purple-50 dark:from-black dark:via-gray-900 dark:to-black">
-        {/* Background layers */}
-        <div className="absolute inset-0 -z-10">
-          <ParticlesBackground />
+    <section
+      id="pricing"
+      className="relative min-h-screen py-20 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 via-indigo-100 to-purple-100 dark:from-[#0a0714] dark:via-[#18122B] dark:to-[#0a0714]"
+    >
+      {/* Enhanced, visually interesting background */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        {/* Faded grid, more visible but low opacity */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(120,120,180,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(120,120,180,0.10) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+            opacity: 0.5
+          }}
+        />
+        {/* Simple animated particles (floating dots) */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(18)].map((_, i) => (
+            <span
+              key={i}
+              className={`absolute rounded-full bg-indigo-400/30 dark:bg-indigo-300/10 animate-float-particle`}
+              style={{
+                width: `${8 + (i % 3) * 4}px`,
+                height: `${8 + (i % 3) * 4}px`,
+                left: `${(i * 11) % 100}%`,
+                top: `${(i * 23) % 100}%`,
+                animationDelay: `${i * 0.7}s`,
+                filter: 'blur(1.5px)'
+              }}
+            />
+          ))}
         </div>
-
-      {/* Checkout Dialog */}
-      <Dialog open={isCheckoutOpen} onOpenChange={closeCheckout}>
-        <DialogContent className="sm:max-w-[500px] rounded-2xl backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border border-white/20 dark:border-gray-700/50 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
-            {checkoutSuccess ? 'Subscription Successful!' : 'Complete Your Subscription'}
-          </DialogTitle>
-          <DialogDescription className="text-center">
-            {checkoutSuccess 
-              ? 'Your subscription has been processed successfully!'
-              : `You're about to subscribe to ${selectedPlan?.name} plan.`}
-          </DialogDescription>
-        </DialogHeader>
-
-        {checkoutSuccess ? (
-          <div className="text-center py-8">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-              <Check className="h-10 w-10 text-green-600 dark:text-green-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Thank You for Subscribing!
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              You now have access to all {selectedPlan?.name} features.
-            </p>
-          </div>
-        ) : (
-          <div className="py-6">
-            {checkoutError && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg text-sm flex items-start">
-                <X className="h-4 w-4 mt-0.5 mr-2 flex-shrink-0" />
-                <span>{checkoutError}</span>
-              </div>
-            )}
-
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-gray-900 dark:text-white">{selectedPlan?.name}</h4>
-                <span className="font-bold text-lg">
-                  ${billingCycle === 'monthly' 
-                    ? selectedPlan?.price 
-                    : Math.round((selectedPlan?.price || 0) * 12 * 0.8)}
-                  <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                    /{billingCycle === 'monthly' ? 'month' : 'year'}
-                  </span>
-                </span>
-              </div>
-              {billingCycle === 'yearly' && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  Save 20% with annual billing
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <Button 
-                onClick={handleCheckout} 
-                disabled={isProcessing}
-                className="w-full py-6 text-base font-medium"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Subscribe for $${billingCycle === 'monthly' 
-                    ? selectedPlan?.price 
-                    : Math.round((selectedPlan?.price || 0) * 12 * 0.8)}
-                  `
-                )}
-              </Button>
-              <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-                You'll be charged ${billingCycle === 'monthly' 
-                  ? `${selectedPlan?.price} per month` 
-                  : `${Math.round((selectedPlan?.price || 0) * 12 * 0.8)} per year`}. Cancel anytime.
-              </p>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-
-    {/* Main Content */}
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-center">
-        <motion.h2 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
-        >
-          Simple, transparent pricing
-        </motion.h2>
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto"
-        >
-          Choose the perfect plan for your needs. Start with a free trial, no credit card required.
-        </motion.p>
-        
-        {/* Billing Toggle */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="mt-10"
-        >
-          <div className="inline-flex items-center p-1 bg-gray-100 dark:bg-gray-800 rounded-full shadow-inner">
-            <button
-              type="button"
-              onClick={() => setBillingCycle('monthly')}
-              className={`px-6 py-3 text-sm font-medium rounded-full transition-all duration-300 ${
-                billingCycle === 'monthly'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-lg'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
-            >
-              Monthly Billing
-            </button>
-            <button
-              type="button"
-              onClick={() => setBillingCycle('yearly')}
-              className={`px-6 py-3 text-sm font-medium rounded-full transition-all duration-300 ${
-                billingCycle === 'yearly'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-lg'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
-            >
-              <span className="flex items-center">
-                Yearly Billing
-                <span className="ml-2 px-2 py-1 text-xs font-semibold bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full">
-                  Save 20%
-                </span>
-              </span>
-            </button>
-          </div>
-          
-          <div className="mt-6 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              Need a custom solution?{' '}
-              <a href="#contact" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
-                Contact us
-              </a>
-            </p>
-          </div>
-
-        </motion.div>
+        {/* Vignette effect */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'radial-gradient(ellipse at center, transparent 60%, #000 100%)',
+          opacity: 0.18
+        }} />
+        {/* Blurred blobs, more vibrant in dark mode */}
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-indigo-400/20 dark:bg-indigo-700/40 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 right-0 w-[350px] h-[350px] bg-purple-300/20 dark:bg-purple-800/40 rounded-full blur-2xl" />
+        <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-pink-200/20 dark:bg-pink-700/40 rounded-full blur-2xl" />
+        <div className="absolute top-1/4 left-1/2 w-[200px] h-[200px] bg-blue-400/10 dark:bg-blue-900/30 rounded-full blur-2xl" />
       </div>
-      
-      {/* Pricing Plans Grid */}
-      <div className="mt-12 grid gap-8 lg:grid-cols-3 lg:gap-6 xl:gap-8">
-          {transformedPlans.map((plan) => {
-            const isPopular = plan.isPopular;
-            const monthlyPrice = plan.price;
-            const yearlyPrice = getPlanPrice(plan.price, 'yearly');
-            const planStyles = getPlanStyles(plan.name, isPopular);
-            
-            return (
-              <motion.div
-                key={plan._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                whileHover={{ y: -10, transition: { duration: 0.2 } }}
-                className={`relative group ${isPopular ? 'lg:-translate-y-4' : ''}`}
-              >
-                {/* Glow Effect */}
-                {isPopular && (
-                  <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-30 blur-2xl group-hover:opacity-40 transition-opacity duration-300"></div>
-                )}
-                
-                {/* Popular Badge */}
-                {isPopular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="px-6 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-lg shadow-indigo-500/30 flex items-center">
-                      <span className="relative flex h-2 w-2 mr-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/90"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                      </span>
-                      MOST POPULAR
-                    </div>
-                  </div>
-                )}
-                
-                {/* Card Container */}
-                <div className={`h-full flex flex-col rounded-2xl overflow-hidden transition-all duration-500 relative z-10 ${
-                  isPopular 
-                    ? 'bg-gradient-to-br from-white/30 via-white/10 to-white/5 dark:from-gray-800/90 dark:via-gray-900/90 dark:to-gray-900 backdrop-blur-xl border border-white/20 shadow-2xl shadow-indigo-500/10'
-                    : 'bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/30 hover:shadow-xl hover:shadow-indigo-500/5'
-                }`}>
-                  {/* Glass Reflection */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-                  
-                  <div className="p-8 flex flex-col h-full relative z-10">
-                    {/* Plan Header */}
-                    <div className="mb-8 relative">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${
-                          isPopular 
-                            ? 'from-indigo-500 to-purple-500' 
-                            : 'from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300'
-                        } tracking-tight`}>
-                          {plan.name}
-                        </h3>
-                        {plan.discount && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-md shadow-green-500/20">
-                            {plan.discount}% OFF
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="text-gray-600 dark:text-gray-300/80 text-sm mb-6 leading-relaxed">
-                        {plan.description}
-                      </p>
-                      
-                      <div className="relative">
-                        <div className="flex items-baseline">
-                          <span className="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400">
-                            ${billingCycle === 'monthly' ? monthlyPrice : yearlyPrice}
-                          </span>
-                          <span className="ml-2 text-gray-500 dark:text-gray-400">
-                            /{billingCycle === 'monthly' ? 'month' : 'year'}
-                          </span>
-                        </div>
-                        {billingCycle === 'yearly' && (
-                          <div className="mt-2 text-sm font-medium bg-green-500/10 text-green-600 dark:text-green-400 inline-flex items-center px-2.5 py-0.5 rounded-full">
-                            <svg className="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            Save ${(monthlyPrice * 12) - yearlyPrice} annually
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Features */}
-                    <ul className="space-y-3 mb-8 flex-grow">
-                      {plan.features.map((feature, idx) => (
-                        <li key={`${plan._id}-${idx}`} className="flex items-start group">
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white text-xs">
-                              <Check className="h-3 w-3" />
-                            </div>
-                          </div>
-                          <span className="ml-3 text-gray-700 dark:text-gray-300 text-sm">
-                            {feature}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    {/* CTA Button */}
-                    <div className="relative group/button">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl opacity-0 group-hover/button:opacity-50 blur transition duration-300"></div>
-                      <button 
-                        onClick={() => handleSelectPlan(plan)}
-                        className={`w-full py-3.5 px-6 rounded-xl font-semibold text-white transition-all duration-300 relative overflow-hidden ${
-                          isPopular 
-                            ? 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-lg shadow-indigo-500/20'
-                            : 'bg-gray-900 hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        <span className="relative z-10 flex items-center justify-center">
-                          Get Started
-                          <svg className="w-4 h-4 ml-2 -mr-1 transition-transform group-hover/button:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </span>
-                        <span className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover/button:opacity-100 transition-opacity duration-300"></span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+      {/* Decorative Stars */}
+      <div className="absolute left-10 top-24 flex flex-col gap-2 z-10">
+        <span className="block w-2 h-2 bg-white/80 dark:bg-white/40 rounded-full"></span>
+        <span className="block w-1.5 h-1.5 bg-white/60 dark:bg-white/30 rounded-full"></span>
+        <span className="block w-1 h-1 bg-white/40 dark:bg-white/20 rounded-full"></span>
+      </div>
+      <div className="absolute right-10 top-24 flex flex-col gap-2 z-10">
+        <span className="block w-2 h-2 bg-white/80 dark:bg-white/40 rounded-full"></span>
+        <span className="block w-1.5 h-1.5 bg-white/60 dark:bg-white/30 rounded-full"></span>
+        <span className="block w-1 h-1 bg-white/40 dark:bg-white/20 rounded-full"></span>
+      </div>
+      {/* Header */}
+      <div className="relative z-20 w-full max-w-4xl mx-auto text-center mb-12">
+        <h2 className="text-4xl md:text-5xl font-extrabold leading-tight pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-400 dark:via-purple-300 dark:to-pink-400 bg-clip-text text-transparent mb-4 drop-shadow-lg">Choose your pricing</h2>
+        <p className="text-base md:text-lg text-gray-700 dark:text-gray-200 max-w-2xl mx-auto">Find the perfect plan to fit your business needs. We provide flexible solutions for startups, growing businesses, and enterprises.</p>
+      </div>
+      {/* Billing Toggle */}
+      <div className="relative z-20 mb-14 flex justify-center">
+        <div className="inline-flex items-center p-1 bg-white/70 dark:bg-[#18122B]/80 border border-gray-200 dark:border-[#3A2C5A] rounded-full shadow-inner backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setBillingCycle('yearly')}
+            className={`px-6 py-2 text-sm font-medium rounded-full transition-all duration-300 focus:outline-none ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg ring-2 ring-indigo-400/60 dark:ring-purple-700/60' : 'text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            Annual
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingCycle('monthly')}
+            className={`px-6 py-2 text-sm font-medium rounded-full transition-all duration-300 focus:outline-none ${billingCycle === 'monthly' ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg ring-2 ring-indigo-400/60 dark:ring-purple-700/60' : 'text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            Monthly
+          </button>
         </div>
+      </div>
+      {/* Pricing Cards */}
+      <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+        {plans.slice(0, 3).map((plan) => {
+          const price = billingCycle === 'monthly' ? plan.price : Math.round(plan.price * 12 * 0.8);
+          return (
+            <div
+              key={plan._id}
+              className={`relative flex flex-col items-center
+                bg-white/70 dark:bg-[#18122B]/80
+                backdrop-blur-2xl
+                border border-gray-200 dark:border-white/10
+                rounded-2xl
+                shadow-2xl
+                px-8 py-10
+                transition-all duration-300
+                ${plan.isPopular ? 'scale-105 z-30 border-indigo-500/60 shadow-indigo-500/30 ring-2 ring-indigo-400/30 dark:ring-purple-700/40' : 'z-20'}
+                ${!plan.isPopular ? 'md:mt-8' : ''}
+                hover:shadow-2xl hover:scale-[1.03] hover:border-indigo-400/40 dark:hover:border-purple-700/40
+              `}
+              style={{ boxShadow: plan.isPopular ? '0 8px 40px 0 rgba(99,102,241,0.22)' : undefined }}
+            >
+              {/* Popular Badge (from backend isPopular) */}
+              {plan.isPopular && (
+                <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-6 py-1 rounded-full shadow-lg backdrop-blur-md border border-white/20 dark:border-white/10 animate-pulse">Recommended</span>
+              )}
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 drop-shadow">{plan.name}</h3>
+              <div className="flex items-end justify-center mb-2">
+                <span className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white drop-shadow">${price}</span>
+                <span className="ml-2 text-base text-gray-500 dark:text-gray-300 font-medium">per month</span>
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-200 mb-6 min-h-[48px]">{plan.description}</p>
+              <button
+                onClick={() => handleSelectPlan(plan)}
+                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 mb-8
+                  ${plan.isPopular
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-600 hover:to-purple-600 ring-2 ring-indigo-400/40 dark:ring-purple-700/60 animate-glow'
+                    : 'bg-white/40 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-white/60 dark:hover:bg-white/20 border border-white/30 dark:border-white/10'}
+                `}
+                style={plan.isPopular ? { boxShadow: '0 0 16px 2px #a78bfa, 0 2px 16px 0 #6366f1' } : {}}
+              >
+                {plan.isPopular ? 'Upgrade Now' : 'Get Started'}
+              </button>
+              <ul className="w-full space-y-3 text-left">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-center text-gray-900 dark:text-white/90 text-sm">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 mr-3 shadow-md">
+                      <Check className="w-3 h-3 text-white" />
+                    </span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
