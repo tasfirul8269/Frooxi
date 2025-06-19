@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,11 +24,18 @@ const queryClient = new QueryClient();
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
+  const [initialCheck, setInitialCheck] = useState(true);
 
-  // Show loading state while checking auth status
-  if (loading) {
+  useEffect(() => {
+    // After initial check, mark as not initial
+    const timer = setTimeout(() => setInitialCheck(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading state only during initial check or when explicitly loading
+  if (loading && initialCheck) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -52,6 +60,7 @@ import SubscriptionsPage from "./pages/admin/SubscriptionsPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import ContactMessagesPage from "./pages/admin/ContactMessagesPage";
 import FinancePage from "./pages/admin/FinancePage";
+import ConsultationsPage from "./pages/admin/ConsultationsPage";
 
 // Admin Routes Component
 const AdminRoutes: React.FC = () => {
@@ -75,6 +84,7 @@ const AdminRoutes: React.FC = () => {
         <Route path="subscriptions" element={<SubscriptionsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="messages" element={<ContactMessagesPage />} />
+        <Route path="consultations" element={<ConsultationsPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>

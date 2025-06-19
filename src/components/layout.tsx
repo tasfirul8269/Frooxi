@@ -1,4 +1,5 @@
 import React, { ReactNode, lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 import Footer from './footer';
 
 // Dynamically import components to reduce bundle size
@@ -10,6 +11,9 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
       <main className="flex-grow">
@@ -18,7 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Footer />
       <Suspense fallback={null}>
         <ThemeToggleButton />
-        <ScrollNavigation />
+        {isHomePage && <ScrollNavigation />}
       </Suspense>
     </div>
   );

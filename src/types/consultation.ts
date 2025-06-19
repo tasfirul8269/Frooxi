@@ -2,9 +2,9 @@ export type ConsultationStatus = 'pending' | 'contacted' | 'in_progress' | 'comp
 
 export interface Note {
   _id: string;
-  text: string;
-  createdAt: string;
-  createdBy: {
+  content: string;
+  addedAt: string;
+  addedBy: {
     _id: string;
     name: string;
   };
@@ -27,12 +27,7 @@ export interface Consultation {
   source: string;
   createdAt: string;
   updatedAt: string;
-  notes?: Array<{
-    content: string;
-    addedAt: string;
-    addedBy: string;
-    _id: string;
-  }>;
+  notes?: Note[];
   metadata: {
     ipAddress: string;
     userAgent: string;

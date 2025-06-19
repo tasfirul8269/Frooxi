@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Search, Filter, Plus, MessageSquare, Calendar, Mail, Phone, MapPin, Globe, Clock, User, X, Check, Clock3, CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -19,7 +19,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 
 import { Consultation, ConsultationStatus, GetConsultationsParams, PaginatedResponse } from '@/types/consultation';
 import { cn } from '@/lib/utils';
-import { getConsultations, updateConsultationStatus, addConsultationNote } from '@/lib/api/consultations';
+import { getConsultations, updateConsultationStatus, addConsultationNote } from '@/lib/api/consultationService';
 
 const statusVariant = {
   pending: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
@@ -64,7 +64,7 @@ export default function ConsultationsPage() {
       ...(statusFilter !== 'all' && { status: statusFilter }),
       ...(searchQuery && { search: searchQuery })
     }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   // Update status mutation
@@ -411,7 +411,7 @@ export default function ConsultationsPage() {
                     <div>
                       <h4 className="font-medium mb-1">Preferred Contact Method</h4>
                       <p className="text-gray-700 capitalize">
-                        {selectedConsultation.preferredContact.replace('_', ' ')}
+                        {selectedConsultation.preferredContact ? selectedConsultation.preferredContact.replace(/_/g, ' ') : 'Not specified'}
                       </p>
                     </div>
                     
@@ -439,9 +439,9 @@ export default function ConsultationsPage() {
                     <div className="flex justify-end">
                       <Button 
                         onClick={handleAddNote}
-                        disabled={!newNote.trim() || addNoteMutation.isLoading}
+                        disabled={!newNote.trim() || addNoteMutation.isPending}
                       >
-                        {addNoteMutation.isLoading ? 'Adding...' : 'Add Note'}
+                        {addNoteMutation.isPending ? 'Adding...' : 'Add Note'}
                       </Button>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { 
@@ -16,6 +16,7 @@ import {
   DollarSign
 } from "lucide-react"
 import { useTheme } from "@/contexts/ThemeContext"
+import { useAuth } from "@/contexts/AuthContext"
 
 const navItems = [
   {
@@ -75,6 +76,17 @@ const navItems = [
 export function AdminNav() {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/admin/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
   
   return (
     <div className="hidden h-full border-r bg-muted/40 md:block">
@@ -110,7 +122,11 @@ export function AdminNav() {
           </nav>
         </div>
         <div className="mt-auto p-4">
-          <Button variant="outline" className="w-full justify-start gap-2">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start gap-2"
+            onClick={handleLogout}
+          >
             <LogOut className="h-4 w-4" />
             Logout
           </Button>

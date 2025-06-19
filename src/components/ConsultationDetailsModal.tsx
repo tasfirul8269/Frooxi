@@ -180,13 +180,13 @@ export function ConsultationDetailsModal({
                       <div key={index} className="border rounded-lg p-3 bg-muted/10">
                         <div className="flex justify-between items-start">
                           <div className="font-medium">
-                            {note.createdBy?.name || 'Admin'}
+                            {note.addedBy?.name || 'Admin'}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {format(new Date(note.createdAt), 'MMM d, yyyy h:mm a')}
+                            {format(new Date(note.addedAt), 'MMM d, yyyy h:mm a')}
                           </div>
                         </div>
-                        <p className="mt-1 text-sm whitespace-pre-wrap">{note.text}</p>
+                        <p className="mt-1 text-sm whitespace-pre-wrap">{note.content}</p>
                       </div>
                     ))}
                   </div>

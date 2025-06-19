@@ -3,7 +3,25 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { SectionHeading } from '@/components/section-heading';
 import { Button } from '@/components/ui/button';
-import { portfolioAPI } from '@/services/api'; // Import the portfolioAPI
+
+// Add type declarations for styled-jsx
+declare module 'react' {
+  interface StyleHTMLAttributes<T> extends React.HTMLAttributes<T> {
+    jsx?: boolean;
+    global?: boolean;
+  }
+}
+import { portfolioAPI } from '@/services/api';
+import { cn } from '@/lib/utils';
+
+// Helper function to chunk array into groups
+const chunkArray = (arr: any[], size: number) => {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+};
 
 
 
@@ -47,7 +65,7 @@ const PortfolioCard: React.FC<{ item: PortfolioItemType }> = ({ item }) => {
       <img
         src={item.image}
         alt={item.title || 'Portfolio project image'}
-        className="w-full h-56 object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-75 brightness-100"
+        className="w-full h-56 object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-90 brightness-90"
         loading="lazy"
       />
       {/* Content overlay slides up on hover */}
@@ -75,6 +93,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItemType[]>(initialPortfolioItems || []);
   const [loading, setLoading] = useState(!initialPortfolioItems?.length);
   const [error, setError] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const fetchPortfolioItems = async () => {
@@ -142,38 +161,86 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
     );
   }
 
+  // Split portfolio items into 3 columns
+  const columns = 3;
+  const itemsPerColumn = Math.ceil(portfolioItems.length / columns);
+  const columnItems = Array(columns).fill(0).map((_, i) => 
+    portfolioItems.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn)
+  );
+
+  // Duplicate items for seamless scrolling
+  const getDuplicatedItems = (items: PortfolioItemType[]) => [...items, ...items];
+
   return (
     <section
       id="portfolio"
-      className=" bg-slate-50 dark:bg-slate-900 relative overflow-hidden slide-in-section"
+      className="bg-slate-50 dark:bg-slate-900 relative overflow-hidden slide-in-section py-20"
       ref={sectionRef}
     >
-
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 z-0 opacity-5 dark:opacity-3">
         <div className="absolute inset-0 bg-grid-slate-200 dark:bg-grid-slate-700 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black)]"></div>
       </div>
-      <div className="container relative z-10 mt-10 mx-auto px-6">
+      
+      <div className="container relative z-10 mx-auto px-6 max-w-7xl">
         <SectionHeading
           title="Our Portfolio"
           subtitle="Explore our creative endeavors and successful project deliveries."
         />
 
         <div className="relative mt-12 md:mt-16 z-10">
-          {/* Simple grid layout with fade effect at the bottom */}
-          <div className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {portfolioItems.map((item) => (
-                <PortfolioCard key={item._id || item.title} item={item} />
-              ))}
-            </div>
-            {/* Fade effect only for the grid */}
-            <div className="absolute -bottom-6 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 pointer-events-none"></div>
+          {/* Vertical scrolling columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-[800px] overflow-hidden relative">
+            {/* Fade effects */}
+            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none"></div>
+            
+            {columnItems.map((items, colIndex) => {
+              const isReversed = colIndex % 2 === 1; // Reverse direction for even columns (1-based index)
+              const animationDuration = 60 + (colIndex * 5); // Different speed for each column
+              
+              return (
+                <div 
+                  key={colIndex} 
+                  className={cn(
+                    "relative h-full overflow-hidden",
+                    isReversed ? "origin-top" : "origin-bottom"
+                  )}
+                >
+                  <div 
+                    className={cn(
+                      "space-y-6 w-full opacity-90 hover:opacity-100 transition-opacity duration-300",
+                      "animate-portfolio-scroll",
+                      isReversed ? "animate-portfolio-scroll-reverse" : ""
+                    )}
+                    style={{
+                      animationDuration: `${animationDuration}s`,
+                      animationIterationCount: 'infinite',
+                      animationTimingFunction: 'linear',
+                      animationPlayState: isHovered ? 'paused' : 'running'
+                    }}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                  >
+                    {getDuplicatedItems(items).map((item, itemIndex) => (
+                      <PortfolioCard 
+                        key={`${item._id || item.title}-${itemIndex}`} 
+                        item={item} 
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           
-          {/* View More Button - outside the fade effect */}
+          {/* View More Button */}
           <div className="mt-16 text-center relative z-10">
-            <Button asChild size="lg" className="group relative overflow-hidden px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold transform hover:scale-105">
+            <Button 
+              asChild 
+              size="lg" 
+              className="group relative overflow-hidden px-8 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 text-white font-semibold transform hover:scale-105"
+            >
               <Link to="/portfolio">
                 View More Projects
                 <ArrowRight size={16} className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
@@ -182,6 +249,28 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
           </div>
         </div>
       </div>
+
+      {/* Add global styles for the animation */}
+      <style jsx={true} global={true}>{`
+        @keyframes portfolio-scroll {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(calc(-50% - 1.5rem)); } /* 1.5rem accounts for gap-6 */
+        }
+        @keyframes portfolio-scroll-reverse {
+          0% { transform: translateY(calc(-50% - 1.5rem)); }
+          100% { transform: translateY(0); }
+        }
+        .animate-portfolio-scroll {
+          animation: portfolio-scroll 60s linear infinite;
+        }
+        .animate-portfolio-scroll-reverse {
+          animation: portfolio-scroll-reverse 60s linear infinite;
+        }
+        .animate-portfolio-scroll:hover, 
+        .animate-portfolio-scroll-reverse:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </section>
   );
 };

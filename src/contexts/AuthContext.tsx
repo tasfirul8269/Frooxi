@@ -68,33 +68,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Refresh the auth token
-  const refreshToken = useCallback(async () => {
-    if (isRefreshingToken) return;
-    
-    try {
-      setIsRefreshingToken(true);
-      const userData = await getCurrentUser();
-      setUser(userData);
-      
-      // If we have a new token, update it
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Schedule next refresh
-      // Assuming token expires in 30 days (30 * 24 * 60 * 60 * 1000)
-      scheduleTokenRefresh(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      // If refresh fails, log the user out
-      await handleLogout();
-    } finally {
-      setIsRefreshingToken(false);
-    }
-  }, [isRefreshingToken]);
-
   // Handle logout logic
   const handleLogout = useCallback(async (redirectToLogin: boolean = true) => {
     try {
@@ -114,69 +87,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Check for existing session on initial load
-  const checkAuth = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Refresh the auth token
+  const refreshToken = useCallback(async () => {
+    if (isRefreshingToken || !user) return;
     
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        setLoading(false);
-        if (!location.pathname.includes('/admin/login') && location.pathname.startsWith('/admin')) {
-          navigate('/admin/login', { 
-            state: { from: location.pathname },
-            replace: true
-          });
-        }
-        return;
-      }
-
-      console.log('Checking authentication status...');
+      setIsRefreshingToken(true);
       const userData = await getCurrentUser();
       
-      if (!userData) {
-        // No user data and no token means auth failed
-        await handleLogout(false); // Don't redirect yet
-        if (location.pathname.startsWith('/admin') && !location.pathname.includes('/admin/login')) {
-          navigate('/admin/login', { 
-            state: { from: location.pathname },
-            replace: true
-          });
+      if (userData) {
+        setUser(userData);
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
-        return;
+        scheduleTokenRefresh(Date.now() + 30 * 24 * 60 * 60 * 1000);
       }
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      await handleLogout();
+    } finally {
+      setIsRefreshingToken(false);
+    }
+  }, [isRefreshingToken, user, handleLogout, scheduleTokenRefresh]);
 
-      setUser(userData);
+  // Check for existing session on initial load - simplified
+  const checkAuth = useCallback(async () => {
+    console.log('checkAuth called');
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      console.log('No token found');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      console.log('Fetching current user...');
+      const userData = await getCurrentUser();
       
-      // Schedule token refresh
-      scheduleTokenRefresh(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
-      
-      // If we're on the login page but already authenticated, redirect to dashboard
-      if (location.pathname === '/admin/login') {
-        console.log('Already authenticated, redirecting to dashboard...');
-        const from = location.state?.from?.pathname || '/admin/dashboard';
-        navigate(from, { replace: true });
+      if (userData) {
+        console.log('User found:', userData.email);
+        setUser(userData);
+        
+        // If we're on the login page, redirect to dashboard
+        if (location.pathname === '/admin/login') {
+          console.log('Redirecting to dashboard...');
+          navigate('/admin/dashboard', { replace: true });
+        }
+      } else {
+        console.log('No user data received');
+        await handleLogout(false);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      await handleLogout(false); // Don't redirect yet
-      
-      if (location.pathname.startsWith('/admin') && !location.pathname.includes('/admin/login')) {
-        navigate('/admin/login', { 
-          state: { from: location.pathname },
-          replace: true
-        });
-      }
+      await handleLogout(false);
     } finally {
       setLoading(false);
     }
-  }, [navigate, location, handleLogout, scheduleTokenRefresh]);
+  }, [navigate, location, handleLogout]);
 
-  // Initialize auth check on mount
+  // Get token for dependency array
+  const token = localStorage.getItem('authToken');
+
+  // Initialize auth check on mount or when token changes
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, [checkAuth, token]);
 
   // Handle login
   const login = async (email: string, password: string): Promise<User> => {
