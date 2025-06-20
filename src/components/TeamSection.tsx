@@ -2,30 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { teamAPI } from '@/services/api';
+import { getTeamMembers } from '@/lib/api/teamService';
+import type { TeamMember } from '@/types/team';
 import { Button } from '@/components/ui/button';
 import TeamMemberCard from './TeamMemberCard';
 
-// Define and export the type for a single team member item
-export interface TeamMemberItem {
-  _id: string;
-  name: string;
-  position: string;
-  bio: string;
-  imageUrl: string;
-  email?: string;
-  socialLinks?: {
-    linkedin?: string;
-    twitter?: string;
-    github?: string;
-    portfolio?: string;
-  };
-  skills?: string[];
-  isActive: boolean;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-}
+// Using TeamMember type from @/types/team
 
 // Define the props for the TeamSection component
 interface TeamSectionProps {
@@ -33,7 +15,7 @@ interface TeamSectionProps {
 }
 
 const TeamSection: React.FC<TeamSectionProps> = ({ sectionRef }) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMemberItem[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,16 +24,55 @@ const TeamSection: React.FC<TeamSectionProps> = ({ sectionRef }) => {
       try {
         setLoading(true);
         console.log('Fetching team members...');
-        const data = await teamAPI.getAll();
-        console.log('API Response:', data);
+        
+        // Make a test request to the API endpoint
+        try {
+          const testResponse = await fetch(`${import.meta.env.VITE_API_URL}/team`);
+          const testData = await testResponse.json();
+          console.log('Test API Response:', testData);
+          if (testData && testData.length > 0) {
+            console.log('Test - First team member:', testData[0]);
+            console.log('Test - Image URL:', testData[0].imageUrl);
+          }
+        } catch (testError) {
+          console.error('Test API Error:', testError);
+        }
+        
+        // Original API call
+        const response = await getTeamMembers();
+        console.log('API Response:', response);
+        
+        if (response && response.length > 0) {
+          console.log('First team member data:', response[0]);
+          console.log('Image URL of first member:', response[0].imageUrl);
+          
+          // Log the full image URL
+          const fullImageUrl = response[0].imageUrl.startsWith('http') 
+            ? response[0].imageUrl 
+            : `${import.meta.env.VITE_API_URL}${response[0].imageUrl}`;
+          console.log('Full image URL:', fullImageUrl);
+        }
+        
+        const data = Array.isArray(response) ? response : [];
+        
+        if (data.length === 0) {
+          console.warn('No team members found in the response');
+          setTeamMembers([]);
+          return;
+        }
         
         // Filter only active team members and sort by order
         const activeMembers = data
-          .filter((member: TeamMemberItem) => member.isActive)
-          .sort((a: TeamMemberItem, b: TeamMemberItem) => a.order - b.order);
+          .filter((member): member is TeamMember => member && member.isActive)
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
         
         console.log('Active Team Members:', activeMembers);
         console.log('Number of active members:', activeMembers.length);
+        
+        if (activeMembers.length === 0) {
+          console.warn('No active team members found');
+        }
+        
         setTeamMembers(activeMembers);
       } catch (err) {
         console.error('Error fetching team members:', err);

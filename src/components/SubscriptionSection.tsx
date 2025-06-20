@@ -187,12 +187,10 @@ const SubscriptionSection: React.FC = () => {
   
   // Handle plan selection
   const handleSelectPlan = (plan: SubscriptionPlan) => {
-    if (!user) {
-      navigate('/login', { state: { from: '/pricing' } });
-      return;
-    }
-    setSelectedPlan(plan);
-    setIsCheckoutOpen(true);
+    const phoneNumber = '8801310846012';
+    const message = `Hello! I'm interested in the ${plan.name} package. Please provide more information.`;
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
   
   // Handle checkout submission
@@ -236,16 +234,24 @@ const SubscriptionSection: React.FC = () => {
     features: plan.features || []
   }));
   
-  // Calculate prices based on billing cycle
+  // Calculate prices based on billing cycle with 6% discount for annual billing
   const getPlanPrice = (price: number, cycle: 'monthly' | 'yearly') => {
-    return cycle === 'monthly' ? price : Math.round(price * 12 * 0.8);
+    if (cycle === 'monthly') return price;
+    const annualPrice = price * 12;
+    const discount = annualPrice * 0.06; // 6% of annual price
+    return Math.round(annualPrice - discount);
   };
   
   // Get price display text
   const getPriceText = (price: number, cycle: 'monthly' | 'yearly') => {
-    return cycle === 'monthly' 
-      ? `$${price} per month` 
-      : `$${Math.round(price * 12 * 0.8)} per year`;
+    if (cycle === 'monthly') {
+      return `$${price} per month`;
+    } else {
+      const annualPrice = price * 12;
+      const discount = annualPrice * 0.06; // 6% of annual price
+      const discountedPrice = annualPrice - discount;
+      return `$${Math.round(discountedPrice)} per year (save $${Math.round(discount)})`;
+    }
   };
 
   // Loading state with skeleton loader
@@ -673,15 +679,17 @@ const SubscriptionSection: React.FC = () => {
           </button>
         </div>
         {billingCycle === 'yearly' && (
-          <p className="mt-3 text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
-            🎉 Save up to 20% with annual billing
+          <p className="mt-3 text-xs sm:text-sm text-center text-green-600 dark:text-green-400 font-medium">
+            Save up to 6% with annual billing
           </p>
         )}
       </div>
       {/* Pricing Cards */}
       <div className="relative z-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full max-w-5xl px-4 sm:px-6">
         {plans.slice(0, 3).map((plan) => {
-          const price = billingCycle === 'monthly' ? plan.price : Math.round(plan.price * 12 * 0.8);
+          const price = billingCycle === 'monthly' 
+            ? plan.price 
+            : Math.round(plan.price * 12 * 0.94); // 6% discount for annual
           return (
             <div
               key={plan._id}
@@ -708,7 +716,8 @@ const SubscriptionSection: React.FC = () => {
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2 drop-shadow">{plan.name}</h3>
               <div className="flex items-end justify-center mb-1 sm:mb-2">
                 <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white drop-shadow">${price}</span>
-                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-500 dark:text-gray-300 font-medium">per month</span>
+                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-500 dark:text-gray-300 font-medium">
+                 {billingCycle === 'monthly' ? '/month' : '/year'}</span>
               </div>
               <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 mb-4 sm:mb-6 min-h-[40px] sm:min-h-[48px] text-center">{plan.description}</p>
               <button
@@ -720,7 +729,7 @@ const SubscriptionSection: React.FC = () => {
                 `}
                 style={plan.isPopular ? { boxShadow: '0 0 12px 1px #a78bfa, 0 2px 12px 0 #6366f1' } : {}}
               >
-                {plan.isPopular ? 'Upgrade Now' : 'Get Started'}
+                Get Started
               </button>
               <ul className="w-full space-y-2 sm:space-y-3 text-left">
                 {plan.features.slice(0, expandedPlans[plan._id] ? plan.features.length : 6).map((feature, i) => (
