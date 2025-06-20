@@ -16,7 +16,7 @@ import PortfolioSection, { PortfolioItemType } from "@/components/PortfolioSecti
 import SubscriptionSection from "../components/SubscriptionSection";
 import TeamSection, { TeamMemberItem } from "@/components/TeamSection"; 
 import TestimonialsSection, { TestimonialItem } from "@/components/TestimonialsSection"; 
-import ContactSection from "@/components/ContactSection"; 
+import ContactSection from "@/components/ContactSection";
 import CtaSection from "@/components/CtaSection"; 
 import ConsultationModal from "../components/ConsultationModal";
 import { Input } from "@/components/ui/input";
@@ -423,9 +423,9 @@ const Index = () => {
       />
 
       {/* Call to Action Section */}
-      <CtaSection 
+      {/* <CtaSection 
         sectionRef={(el) => { if (sectionsRef.current) sectionsRef.current[7] = el; }}
-      />
+      /> */}
       <ConsultationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </Layout>
   );

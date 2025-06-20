@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ParticlesBackground from './ParticlesBackground';
-import { Check, Zap, Star, BadgeCheck, Shield, Clock, Gift, Heart, X, Loader2, RefreshCw, Info, Sun, Moon } from 'lucide-react';
+import { Check, Zap, Star, BadgeCheck, Shield, Clock, Gift, Heart, X, Loader2, RefreshCw, Info, Sun, Moon, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { subscriptionAPI } from '@/services/api';
@@ -108,6 +108,15 @@ const SubscriptionSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [expandedPlans, setExpandedPlans] = useState<{[key: string]: boolean}>({});
+  
+  // Toggle feature expansion for a plan
+  const toggleExpandPlan = (planId: string) => {
+    setExpandedPlans(prev => ({
+      ...prev,
+      [planId]: !prev[planId]
+    }));
+  };
 
   // Fetch subscription plans from the backend
   useEffect(() => {
@@ -629,81 +638,120 @@ const SubscriptionSection: React.FC = () => {
         <span className="block w-1 h-1 bg-white/40 dark:bg-white/20 rounded-full"></span>
       </div>
       {/* Header */}
-      <div className="relative z-20 w-full max-w-4xl mx-auto text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-extrabold leading-tight pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-400 dark:via-purple-300 dark:to-pink-400 bg-clip-text text-transparent mb-4 drop-shadow-lg">Choose your pricing</h2>
-        <p className="text-base md:text-lg text-gray-700 dark:text-gray-200 max-w-2xl mx-auto">Find the perfect plan to fit your business needs. We provide flexible solutions for startups, growing businesses, and enterprises.</p>
+      <div className="relative z-20 w-full max-w-4xl mx-auto text-center px-4 sm:px-6 mb-8 sm:mb-12">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight pb-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-400 dark:via-purple-300 dark:to-pink-400 bg-clip-text text-transparent mb-3 sm:mb-4 drop-shadow-lg">
+          Choose your plan
+        </h2>
+        <p className="text-sm sm:text-base md:text-lg text-gray-700 dark:text-gray-200 max-w-2xl mx-auto">
+          Find the perfect plan to fit your business needs. We provide flexible solutions for startups, growing businesses, and enterprises.
+        </p>
       </div>
       {/* Billing Toggle */}
-      <div className="relative z-20 mb-14 flex justify-center">
-        <div className="inline-flex items-center p-1 bg-white/70 dark:bg-[#18122B]/80 border border-gray-200 dark:border-[#3A2C5A] rounded-full shadow-inner backdrop-blur-md">
+      <div className="relative z-20 mb-8 sm:mb-12 px-4 sm:px-0">
+        <div className="inline-flex items-center p-0.5 sm:p-1 bg-white/70 dark:bg-[#18122B]/80 border border-gray-200 dark:border-[#3A2C5A] rounded-full shadow-inner backdrop-blur-md">
           <button
             type="button"
             onClick={() => setBillingCycle('yearly')}
-            className={`px-6 py-2 text-sm font-medium rounded-full transition-all duration-300 focus:outline-none ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg ring-2 ring-indigo-400/60 dark:ring-purple-700/60' : 'text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'}`}
+            className={`px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-300 focus:outline-none whitespace-nowrap ${
+              billingCycle === 'yearly' 
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md sm:shadow-lg ring-1 sm:ring-2 ring-indigo-400/60 dark:ring-purple-700/60' 
+                : 'text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'
+            }`}
           >
-            Annual
+            Annual Billing
           </button>
           <button
             type="button"
             onClick={() => setBillingCycle('monthly')}
-            className={`px-6 py-2 text-sm font-medium rounded-full transition-all duration-300 focus:outline-none ${billingCycle === 'monthly' ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg ring-2 ring-indigo-400/60 dark:ring-purple-700/60' : 'text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'}`}
+            className={`px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-300 focus:outline-none whitespace-nowrap ${
+              billingCycle === 'monthly' 
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md sm:shadow-lg ring-1 sm:ring-2 ring-indigo-400/60 dark:ring-purple-700/60' 
+                : 'text-gray-700 dark:text-white/60 hover:text-gray-900 dark:hover:text-white'
+            }`}
           >
-            Monthly
+            Monthly Billing
           </button>
         </div>
+        {billingCycle === 'yearly' && (
+          <p className="mt-3 text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
+            🎉 Save up to 20% with annual billing
+          </p>
+        )}
       </div>
       {/* Pricing Cards */}
-      <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+      <div className="relative z-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full max-w-5xl px-4 sm:px-6">
         {plans.slice(0, 3).map((plan) => {
           const price = billingCycle === 'monthly' ? plan.price : Math.round(plan.price * 12 * 0.8);
           return (
             <div
               key={plan._id}
               className={`relative flex flex-col items-center
-                bg-white/70 dark:bg-[#18122B]/80
+                bg-white/80 dark:bg-[#18122B]/90
                 backdrop-blur-2xl
                 border border-gray-200 dark:border-white/10
                 rounded-2xl
-                shadow-2xl
-                px-8 py-10
+                shadow-lg sm:shadow-2xl
+                p-6 sm:px-6 sm:py-8
                 transition-all duration-300
-                ${plan.isPopular ? 'scale-105 z-30 border-indigo-500/60 shadow-indigo-500/30 ring-2 ring-indigo-400/30 dark:ring-purple-700/40' : 'z-20'}
+                ${plan.isPopular ? 'sm:scale-105 z-30 border-indigo-500/60 shadow-indigo-500/20 sm:shadow-indigo-500/30 ring-1 sm:ring-2 ring-indigo-400/30 dark:ring-purple-700/40' : 'z-20'}
                 ${!plan.isPopular ? 'md:mt-8' : ''}
-                hover:shadow-2xl hover:scale-[1.03] hover:border-indigo-400/40 dark:hover:border-purple-700/40
+                hover:shadow-xl sm:hover:shadow-2xl sm:hover:scale-[1.03] hover:border-indigo-400/40 dark:hover:border-purple-700/40
               `}
-              style={{ boxShadow: plan.isPopular ? '0 8px 40px 0 rgba(99,102,241,0.22)' : undefined }}
+              style={{ boxShadow: plan.isPopular ? '0 4px 20px 0 rgba(99,102,241,0.15)' : undefined }}
             >
               {/* Popular Badge (from backend isPopular) */}
               {plan.isPopular && (
-                <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-6 py-1 rounded-full shadow-lg backdrop-blur-md border border-white/20 dark:border-white/10 animate-pulse">Recommended</span>
+                <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] sm:text-xs font-bold px-4 sm:px-6 py-1 rounded-full shadow-md sm:shadow-lg backdrop-blur-md border border-white/20 dark:border-white/10 animate-pulse whitespace-nowrap">
+                  Recommended
+                </span>
               )}
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 drop-shadow">{plan.name}</h3>
-              <div className="flex items-end justify-center mb-2">
-                <span className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white drop-shadow">${price}</span>
-                <span className="ml-2 text-base text-gray-500 dark:text-gray-300 font-medium">per month</span>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2 drop-shadow">{plan.name}</h3>
+              <div className="flex items-end justify-center mb-1 sm:mb-2">
+                <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white drop-shadow">${price}</span>
+                <span className="ml-1.5 sm:ml-2 text-sm sm:text-base text-gray-500 dark:text-gray-300 font-medium">per month</span>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-200 mb-6 min-h-[48px]">{plan.description}</p>
+              <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 mb-4 sm:mb-6 min-h-[40px] sm:min-h-[48px] text-center">{plan.description}</p>
               <button
                 onClick={() => handleSelectPlan(plan)}
-                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 mb-8
+                className={`w-full py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-300 mb-6 sm:mb-8 text-sm sm:text-base
                   ${plan.isPopular
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-600 hover:to-purple-600 ring-2 ring-indigo-400/40 dark:ring-purple-700/60 animate-glow'
-                    : 'bg-white/40 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-white/60 dark:hover:bg-white/20 border border-white/30 dark:border-white/10'}
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md hover:from-indigo-600 hover:to-purple-600 ring-1 sm:ring-2 ring-indigo-400/40 dark:ring-purple-700/60 animate-glow'
+                    : 'bg-white/60 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-white/80 dark:hover:bg-white/20 border border-white/30 dark:border-white/10'}
                 `}
-                style={plan.isPopular ? { boxShadow: '0 0 16px 2px #a78bfa, 0 2px 16px 0 #6366f1' } : {}}
+                style={plan.isPopular ? { boxShadow: '0 0 12px 1px #a78bfa, 0 2px 12px 0 #6366f1' } : {}}
               >
                 {plan.isPopular ? 'Upgrade Now' : 'Get Started'}
               </button>
-              <ul className="w-full space-y-3 text-left">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center text-gray-900 dark:text-white/90 text-sm">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 mr-3 shadow-md">
-                      <Check className="w-3 h-3 text-white" />
+              <ul className="w-full space-y-2 sm:space-y-3 text-left">
+                {plan.features.slice(0, expandedPlans[plan._id] ? plan.features.length : 6).map((feature, i) => (
+                  <motion.li 
+                    key={i} 
+                    className="flex items-start text-gray-900 dark:text-white/90 text-xs sm:text-sm"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: i * 0.05 }}
+                  >
+                    <span className="inline-flex items-center justify-center flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 mt-0.5 mr-2 sm:mr-3 shadow-md">
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                     </span>
-                    {feature}
-                  </li>
+                    <span className="leading-tight">{feature}</span>
+                  </motion.li>
                 ))}
               </ul>
+              {plan.features.length > 6 && (
+                <button 
+                  onClick={() => toggleExpandPlan(plan._id)}
+                  className="mt-3 text-xs font-medium text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors flex items-center"
+                >
+                  {expandedPlans[plan._id] ? (
+                    <>
+                      Show less <ChevronUp className="w-3 h-3 ml-1" />
+                    </>
+                  ) : (
+                    `+${plan.features.length - 6} more features`
+                  )}
+                </button>
+              )}
             </div>
           );
         })}

@@ -15,6 +15,7 @@ import Portfolio from "./pages/Portfolio";
 import Company from "./pages/Company";
 import Contact from "./pages/Contact";
 import Products from "./pages/Products";
+import Team from "./pages/Team";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/admin/Login";
@@ -92,10 +93,114 @@ const AdminRoutes: React.FC = () => {
   );
 };
 
+const AppRoutes = () => {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={
+        <>
+          <SEO 
+            title="Home" 
+            description="Frooxi offers professional IT services including Web Development, App Development, SEO, UI/UX Design, and Cyber Security solutions." 
+          />
+          <Index />
+        </>
+      } />
+      <Route path="/services" element={
+        <>
+          <SEO 
+            title="Our Services" 
+            description="Explore our comprehensive IT services including custom software development, web applications, mobile apps, and digital solutions." 
+          />
+          <Services />
+        </>
+      } />
+      <Route path="/portfolio" element={
+        <>
+          <SEO 
+            title="Our Portfolio" 
+            description="Browse our portfolio of successful projects and see how we've helped businesses transform their digital presence." 
+          />
+          <Portfolio />
+        </>
+      } />
+      <Route path="/company" element={
+        <>
+          <SEO 
+            title="About Us" 
+            description="Learn about Frooxi, a leading IT services company dedicated to delivering innovative digital solutions." 
+          />
+          <Company />
+        </>
+      } />
+      <Route path="/contact" element={
+        <>
+          <SEO 
+            title="Contact Us" 
+            description="Get in touch with our team to discuss your project requirements and how we can help your business grow." 
+          />
+          <Contact />
+        </>
+      } />
+      <Route path="/products" element={
+        <>
+          <SEO 
+            title="Our Products" 
+            description="Discover our range of digital products designed to help businesses succeed in the digital landscape." 
+          />
+          <Products />
+        </>
+      } />
+
+      <Route path="/team" element={
+        <>
+          <SEO 
+            title="Our Team" 
+            description="Meet the talented professionals behind Frooxi who are dedicated to delivering exceptional digital solutions." 
+          />
+          <Team />
+        </>
+      } />
+
+      {/* Admin Routes */}
+      <Route path="/admin/login" 
+        element={
+          <>
+            <SEO 
+              title="Admin Login" 
+              description="Access the Frooxi admin dashboard" 
+            />
+            <Login />
+          </>
+        } 
+      />
+      <Route 
+        path="/admin/*" 
+        element={
+          <ProtectedRoute>
+            <AdminRoutes />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* 404 Route */}
+      <Route path="*" element={
+        <>
+          <SEO 
+            title="Page Not Found" 
+            description="The page you are looking for doesn't exist or has been moved." 
+          />
+          <NotFound />
+        </>
+      } />
+    </Routes>
+  );
+};
+
 const App = () => {
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
         <ThemeProvider>
           <TooltipProvider>
             <Toaster />
@@ -103,7 +208,6 @@ const App = () => {
             <BrowserRouter>
               <AuthProvider>
                 <Routes>
-                  {/* Public Routes */}
                   <Route path="/" element={
                     <>
                       <SEO 
@@ -158,29 +262,29 @@ const App = () => {
                       <Products />
                     </>
                   } />
-
-                  {/* Admin Routes */}
-                  <Route path="/admin/login" 
-                    element={
-                      <>
-                        <SEO 
-                          title="Admin Login" 
-                          description="Access the Frooxi admin dashboard" 
-                        />
-                        <Login />
-                      </>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/*" 
-                    element={
-                      <ProtectedRoute>
-                        <AdminRoutes />
-                      </ProtectedRoute>
-                    } 
-                  />
-
-                  {/* 404 Route */}
+                  <Route path="/team" element={
+                    <>
+                      <SEO 
+                        title="Our Team" 
+                        description="Meet the talented professionals behind Frooxi who are dedicated to delivering exceptional digital solutions." 
+                      />
+                      <Team />
+                    </>
+                  } />
+                  <Route path="/admin/login" element={
+                    <>
+                      <SEO 
+                        title="Admin Login" 
+                        description="Access the Frooxi admin dashboard" 
+                      />
+                      <Login />
+                    </>
+                  } />
+                  <Route path="/admin/*" element={
+                    <ProtectedRoute>
+                      <AdminRoutes />
+                    </ProtectedRoute>
+                  } />
                   <Route path="*" element={
                     <>
                       <SEO 
@@ -195,8 +299,8 @@ const App = () => {
             </BrowserRouter>
           </TooltipProvider>
         </ThemeProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
   );
 };
 

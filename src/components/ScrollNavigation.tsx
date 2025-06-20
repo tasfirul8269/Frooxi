@@ -23,7 +23,6 @@ const ScrollNavigation = () => {
     { id: 'subscription', label: 'Subscription', icon: <Bell className="h-5 w-5" /> },
     { id: 'team', label: 'Team', icon: <Users className="h-5 w-5" /> },
     { id: 'testimonials', label: 'Testimonials', icon: <Star className="h-5 w-5" /> },
-    { id: 'contact', label: 'Contact', icon: <Mail className="h-5 w-5" /> },
   ];
 
   useEffect(() => {
@@ -93,7 +92,7 @@ const ScrollNavigation = () => {
         damping: 20,
         stiffness: 300,
       }}
-      className="fixed bottom-6 left-0 right-0 z-40 flex justify-center px-4"
+      className="fixed bottom-6 left-0 right-0 z-40 hidden md:flex justify-center px-4"
     >
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2 border border-gray-200 dark:border-gray-700">
         {sections.map((section) => (

@@ -46,7 +46,7 @@ interface PortfolioSectionProps {
   sectionRef: (el: HTMLElement | null) => void;
 }
 
-const PortfolioCard: React.FC<{ item: PortfolioItemType }> = ({ item }) => {
+const PortfolioCard: React.FC<{ item: PortfolioItemType, mobile?: boolean }> = ({ item, mobile = false }) => {
   const handleClick = (e: React.MouseEvent) => {
     if (item.link) {
       // Only prevent default if there's a link to avoid scrolling
@@ -58,32 +58,43 @@ const PortfolioCard: React.FC<{ item: PortfolioItemType }> = ({ item }) => {
   return (
     <div 
       onClick={handleClick}
-      className={`group relative mb-6 break-inside-avoid rounded-2xl shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 transition-all duration-300 hover:shadow-2xl ${
+      className={`group relative break-inside-avoid rounded-xl shadow-xl overflow-hidden bg-slate-200 dark:bg-slate-800 transition-all duration-300 hover:shadow-2xl ${
         item.link ? 'cursor-pointer' : ''
-      }`}
+      } ${mobile ? 'w-full' : 'mb-6'}`}
     >
-      <img
-        src={item.image}
-        alt={item.title || 'Portfolio project image'}
-        className="w-full h-56 object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-90 brightness-90"
-        loading="lazy"
-      />
-      {/* Content overlay slides up on hover */}
-      <div className="absolute inset-x-0 bottom-0 h-2/3 flex flex-col justify-end p-5 bg-gradient-to-t from-black/80 via-black/50 to-transparent opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-400 ease-in-out">
-        <h4 className="text-lg font-bold text-white mb-1 drop-shadow-md">{item.title}</h4>
-        <div className="flex flex-wrap gap-2 mb-2">
-          <span className="inline-block px-2 py-0.5 rounded bg-primary-600/80 text-xs text-white font-semibold">{item.category}</span>
-          {item.tags && item.tags.map((tag, idx) => (
-            <span key={tag+idx} className="inline-block px-2 py-0.5 rounded bg-slate-700/70 text-xs text-primary-200 animate-fade-in-up" style={{animationDelay: `${0.1 + idx * 0.05}s`}}>{tag}</span>
-          ))}
-        </div>
-        <p className="text-sm text-white/90 mb-3">{item.description}</p>
-        {item.link && (
-          <div className="flex items-center text-xs text-white/70 mt-1">
-            <span className="truncate">{new URL(item.link).hostname.replace('www.', '')}</span>
-            <ArrowRight size={14} className="ml-1 flex-shrink-0" />
+      <div className={`relative ${mobile ? 'aspect-video' : 'h-56'}`}>
+        <img
+          src={item.image}
+          alt={item.title || 'Portfolio project image'}
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-90 brightness-90"
+          loading="lazy"
+        />
+        {/* Content overlay - simplified for mobile */}
+        <div className={`absolute inset-0 flex flex-col justify-end p-3 sm:p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent ${
+          mobile ? 'opacity-100' : 'opacity-0 translate-y-full group-hover:opacity-100 group-hover:translate-y-0'
+        } transition-all duration-400 ease-in-out`}>
+          <h4 className="text-sm sm:text-base font-bold text-white mb-1 drop-shadow-md line-clamp-1">{item.title}</h4>
+          <div className="flex flex-wrap gap-1 mb-1">
+            <span className="inline-block px-1.5 py-0.5 rounded bg-primary-600/80 text-[10px] sm:text-xs text-white font-semibold">
+              {item.category}
+            </span>
+            {item.tags && item.tags.map((tag, idx) => (
+              <span 
+                key={tag+idx} 
+                className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-slate-700/70 text-[10px] text-primary-200"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
-        )}
+          <p className="text-[11px] sm:text-sm text-white/90 mb-1.5 line-clamp-2">{item.description}</p>
+          {item.link && (
+            <div className="flex items-center text-[10px] sm:text-xs text-white/70">
+              <span className="truncate">{new URL(item.link).hostname.replace('www.', '')}</span>
+              <ArrowRight size={12} className="ml-0.5 flex-shrink-0" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -161,13 +172,17 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
     );
   }
 
-  // Split portfolio items into 3 columns
+  // Split portfolio items into two rows for mobile
+  const mobileRow1 = [...portfolioItems];
+  const mobileRow2 = [...portfolioItems].reverse(); // Reverse for different starting points
+  
+  // For desktop, maintain the original 3-column layout
   const columns = 3;
   const itemsPerColumn = Math.ceil(portfolioItems.length / columns);
   const columnItems = Array(columns).fill(0).map((_, i) => 
     portfolioItems.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn)
   );
-
+  
   // Duplicate items for seamless scrolling
   const getDuplicatedItems = (items: PortfolioItemType[]) => [...items, ...items];
 
@@ -189,8 +204,37 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
         />
 
         <div className="relative mt-12 md:mt-16 z-10">
-          {/* Vertical scrolling columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-[800px] overflow-hidden relative">
+          {/* Mobile: Horizontal scrolling rows */}
+          <div className="md:hidden space-y-1">
+            {/* Row 1 */}
+            <div className="relative group overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none" />
+              <div className="flex space-x-0.5 sm:space-x-1 px-1 sm:px-2 py-2 animate-marquee-normal">
+                {[...mobileRow1, ...mobileRow1].map((item, index) => (
+                  <div key={`mobile-row1-${index}`} className="flex-shrink-0 w-[80vw] sm:w-80 px-0.5">
+                    <PortfolioCard item={item} mobile />
+                  </div>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none" />
+            </div>
+            
+            {/* Row 2 */}
+            <div className="relative group overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none" />
+              <div className="flex space-x-0.5 sm:space-x-1 px-1 sm:px-2 py-2 animate-marquee-reverse">
+                {[...mobileRow2, ...mobileRow2].map((item, index) => (
+                  <div key={`mobile-row2-${index}`} className="flex-shrink-0 w-[80vw] sm:w-80 px-0.5">
+                    <PortfolioCard item={item} mobile />
+                  </div>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Desktop: Vertical scrolling columns */}
+          <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-[800px] overflow-hidden relative">
             {/* Fade effects */}
             <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none"></div>
