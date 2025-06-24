@@ -45,7 +45,7 @@ export default function SubscriptionsPage() {
       });
     },
     onError: (error) => {
-      console.error('Error creating subscription plan:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error creating subscription plan:', error);
       toast({
         title: "Error",
         description: "Failed to create subscription plan. Please try again.",
@@ -62,7 +62,7 @@ export default function SubscriptionsPage() {
       setIsCreating(true);
       await createPlanMutation.mutateAsync(data);
     } catch (error) {
-      console.error('Error creating plan:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error creating plan:', error);
     } finally {
       setIsCreating(false);
     }

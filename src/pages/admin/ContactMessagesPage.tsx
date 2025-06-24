@@ -87,7 +87,7 @@ export default function ContactMessagesPage() {
         await toggleReadMutation.mutateAsync(message._id);
       }
     } catch (error) {
-      console.error('Error fetching message:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error fetching message:', error);
       toast.error('Failed to load message');
     }
   };
@@ -103,7 +103,7 @@ export default function ContactMessagesPage() {
       await toggleReadMutation.mutateAsync(id);
       toast.success(`Message marked as ${isRead ? 'unread' : 'read'}`);
     } catch (error) {
-      console.error('Error toggling read status:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error toggling read status:', error);
       toast.error('Failed to update message status');
     }
   };

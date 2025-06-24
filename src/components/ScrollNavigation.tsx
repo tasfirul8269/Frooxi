@@ -10,20 +10,20 @@ interface Section {
   icon: React.ReactNode;
 }
 
+const SECTIONS = [
+  { id: 'home', label: 'Home', icon: <Home className="h-5 w-5" /> },
+  { id: 'services', label: 'Services', icon: <Briefcase className="h-5 w-5" /> },
+  { id: 'portfolio', label: 'Portfolio', icon: <Briefcase className="h-5 w-5" /> },
+  { id: 'subscription', label: 'Subscription', icon: <Bell className="h-5 w-5" /> },
+  { id: 'team', label: 'Team', icon: <Users className="h-5 w-5" /> },
+  { id: 'testimonials', label: 'Testimonials', icon: <Star className="h-5 w-5" /> },
+] as const;
+
 const ScrollNavigation = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
-
-  const sections: Section[] = [
-    { id: 'home', label: 'Home', icon: <Home className="h-5 w-5" /> },
-    { id: 'services', label: 'Services', icon: <Briefcase className="h-5 w-5" /> },
-    { id: 'portfolio', label: 'Portfolio', icon: <Briefcase className="h-5 w-5" /> },
-    { id: 'subscription', label: 'Subscription', icon: <Bell className="h-5 w-5" /> },
-    { id: 'team', label: 'Team', icon: <Users className="h-5 w-5" /> },
-    { id: 'testimonials', label: 'Testimonials', icon: <Star className="h-5 w-5" /> },
-  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,7 +34,7 @@ const ScrollNavigation = () => {
         setActiveSection('home');
       } else {
         // Update active section for other sections
-        sections.slice(1).forEach(section => { // Skip home section since we already checked it
+        SECTIONS.slice(1).forEach(section => { // Skip home section since we already checked it
           const element = document.getElementById(section.id);
           if (element) {
             const { offsetTop, offsetHeight } = element;
@@ -68,7 +68,7 @@ const ScrollNavigation = () => {
     handleScroll(); // Check on initial load
     
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, []); // No dependencies needed as SECTIONS is now a constant
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -95,7 +95,7 @@ const ScrollNavigation = () => {
       className="fixed bottom-6 left-0 right-0 z-40 hidden md:flex justify-center px-4"
     >
       <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-2 border border-gray-200 dark:border-gray-700">
-        {sections.map((section) => (
+        {SECTIONS.map((section) => (
           <Button
             key={section.id}
             onClick={() => scrollToSection(section.id)}

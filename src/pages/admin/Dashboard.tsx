@@ -222,7 +222,7 @@ const useTransactionCharts = () => {
           monthlyData
         };
       } catch (error) {
-        console.error('Error fetching transaction summary:', error);
+        if (process.env.NODE_ENV !== 'production') console.error('Error fetching transaction summary:', error);
         return defaultTransactionSummary;
       }
     },

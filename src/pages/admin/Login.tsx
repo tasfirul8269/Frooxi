@@ -34,7 +34,7 @@ export default function Login() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('Already authenticated, redirecting to:', from);
+      if (process.env.NODE_ENV !== 'production') console.log('Already authenticated, redirecting to:', from);
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, from]);
@@ -60,10 +60,10 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      console.log('Attempting to log in...');
+      if (process.env.NODE_ENV !== 'production') console.log('Attempting to log in...');
       await login(email, password);
       // Navigation is handled by the AuthContext after successful login
-      console.log('Login successful, redirecting...');
+      if (process.env.NODE_ENV !== 'production') console.log('Login successful, redirecting...');
     } catch (err: any) {
       console.error('Login error:', {
         error: err,

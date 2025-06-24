@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Layout } from "@/components/layout";
 import { SectionHeading } from "@/components/section-heading";
@@ -48,7 +47,7 @@ const Contact = () => {
     
     try {
       const validatedData = contactSchema.parse(formData);
-      console.log("Form submitted:", validatedData);
+      if (process.env.NODE_ENV !== 'production') console.log("Form submitted:", validatedData);
       
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));

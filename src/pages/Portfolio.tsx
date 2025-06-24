@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { SectionHeading } from "@/components/section-heading";
@@ -45,7 +44,7 @@ const Portfolio = () => {
           }));
         setPortfolioItems(activeItems);
       } catch (err) {
-        console.error('Error fetching portfolio items:', err);
+        if (process.env.NODE_ENV !== 'production') console.error('Error fetching portfolio items:', err);
         setError('Failed to load portfolio items. Please try again later.');
       } finally {
         setLoading(false);

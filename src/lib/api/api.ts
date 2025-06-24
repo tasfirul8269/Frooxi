@@ -5,8 +5,6 @@ const API_URL = import.meta.env.PROD
   ? 'https://frooxi-backend.onrender.com/api' 
   : import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-console.log('API Base URL:', API_URL);
-
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -37,15 +35,9 @@ api.interceptors.request.use(
       }
     }
     
-    console.log(`[${new Date().toISOString()}] ${config.method?.toUpperCase()} ${config.url}`, {
-      data: config.data,
-      params: config.params
-    });
-    
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -53,10 +45,6 @@ api.interceptors.request.use(
 // Add a response interceptor to handle common errors
 api.interceptors.response.use(
   (response) => {
-    console.log(`[${new Date().toISOString()}] Response ${response.status} ${response.config.url}`, {
-      data: response.data
-    });
-    
     // Handle successful responses
     if (response.data?.token) {
       // If the response contains a token, store it
@@ -68,25 +56,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // Log the error for debugging
-    console.error('API Error:', {
-      url: originalRequest?.url,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-      code: error.code,
-      config: {
-        method: originalRequest?.method,
-        url: originalRequest?.url,
-        data: originalRequest?.data,
-        timeout: originalRequest?.timeout
-      }
-    });
-    
     // Handle network errors
     if (error.code === 'ECONNABORTED' || !error.response) {
       const errorMessage = 'Request timeout. Please check your internet connection and try again.';
-      console.error('Network error:', errorMessage);
       return Promise.reject(new Error(errorMessage));
     }
     
@@ -111,7 +83,6 @@ api.interceptors.response.use(
     
     // Handle server errors
     if (error.response?.status >= 500) {
-      console.error('Server error:', error.response.data);
       return Promise.reject(new Error('Server error. Please try again later.'));
     }
     

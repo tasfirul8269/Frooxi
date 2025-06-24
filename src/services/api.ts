@@ -2,16 +2,7 @@ import axios, { AxiosError, AxiosResponse } from 'axios';
 
 // Get API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// Debug log environment variables
-console.log('Environment:', {
-  NODE_ENV: import.meta.env.MODE,
-  VITE_API_URL: import.meta.env.VITE_API_URL,
-  PROD: import.meta.env.PROD,
-  DEV: import.meta.env.DEV,
-});
-
-console.log('Using API URL:', API_URL);
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 // Create axios instance with default config
 const api = axios.create({
@@ -19,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    ...(API_KEY ? { 'x-api-key': API_KEY } : {}),
   },
   timeout: 10000, // 10 seconds timeout
 });

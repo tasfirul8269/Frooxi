@@ -35,7 +35,7 @@ export default function TeamPage() {
       const data = await getTeamMembers();
       setTeamMembers(data);
     } catch (error) {
-      console.error('Error fetching team members:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error fetching team members:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch team members',
@@ -66,7 +66,7 @@ export default function TeamPage() {
         });
         fetchTeamMembers();
       } catch (error) {
-        console.error('Error deleting team member:', error);
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting team member:', error);
         toast({
           title: 'Error',
           description: 'Failed to delete team member',
@@ -98,7 +98,7 @@ export default function TeamPage() {
       setShowForm(false);
       fetchTeamMembers();
     } catch (error: any) {
-      console.error('Error saving team member:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error saving team member:', error);
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to save team member',

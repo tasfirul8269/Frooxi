@@ -167,7 +167,7 @@ export default function UsersPage() {
       const data = await userService.getUsers();
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error fetching users:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch users',
@@ -198,7 +198,7 @@ export default function UsersPage() {
         });
         fetchUsers();
       } catch (error) {
-        console.error('Error deleting user:', error);
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting user:', error);
         toast({
           title: 'Error',
           description: 'Failed to delete user',
@@ -231,7 +231,7 @@ export default function UsersPage() {
       setShowForm(false);
       fetchUsers();
     } catch (error) {
-      console.error('Error saving user:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error saving user:', error);
       toast({
         title: 'Error',
         description: 'Failed to save user',
@@ -251,7 +251,7 @@ export default function UsersPage() {
       });
       fetchUsers();
     } catch (error) {
-      console.error('Error updating user status:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error updating user status:', error);
       toast({
         title: 'Error',
         description: 'Failed to update user status',

@@ -84,7 +84,7 @@ export function AdminNav() {
       await logout()
       navigate('/admin/login')
     } catch (error) {
-      console.error('Logout failed:', error)
+      if (process.env.NODE_ENV !== 'production') console.error('Logout failed:', error)
     }
   }
   

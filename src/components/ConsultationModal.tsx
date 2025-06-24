@@ -58,7 +58,7 @@ const ConsultationModal: React.FC<ConsultationModalProps> = ({ isOpen, onClose, 
     try {
       setIsSubmitting(true);
       
-      console.log('Submitting form data:', data);
+      if (process.env.NODE_ENV !== 'production') console.log('Submitting form data:', data);
       
       const response = await fetch('http://localhost:5000/api/consultations', {
         method: 'POST',
@@ -75,19 +75,19 @@ const ConsultationModal: React.FC<ConsultationModalProps> = ({ isOpen, onClose, 
         }),
       });
 
-      console.log('Response status:', response.status);
+      if (process.env.NODE_ENV !== 'production') console.log('Response status:', response.status);
       
       let responseData;
       try {
         responseData = await response.json();
-        console.log('Response data:', responseData);
+        if (process.env.NODE_ENV !== 'production') console.log('Response data:', responseData);
       } catch (jsonError) {
-        console.error('Error parsing JSON response:', jsonError);
+        if (process.env.NODE_ENV !== 'production') console.error('Error parsing JSON response:', jsonError);
         throw new Error('Invalid response from server');
       }
       
       if (!response.ok) {
-        console.error('API Error:', {
+        if (process.env.NODE_ENV !== 'production') console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,
           data: responseData
@@ -100,10 +100,10 @@ const ConsultationModal: React.FC<ConsultationModalProps> = ({ isOpen, onClose, 
         throw new Error(errorMessage);
       }
       
-      console.log('Consultation submitted successfully:', responseData);
+      if (process.env.NODE_ENV !== 'production') console.log('Consultation submitted successfully:', responseData);
       handleSuccess();
     } catch (error) {
-      console.error('Error in onSubmit:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error in onSubmit:', error);
       toast.error(error.message || 'Failed to submit consultation. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -139,24 +139,14 @@ const ConsultationModal: React.FC<ConsultationModalProps> = ({ isOpen, onClose, 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-4xl bg-background text-foreground border border-border rounded-xl overflow-hidden p-0 shadow-xl">
+      <DialogContent className="sm:max-w-4xl bg-background text-foreground border border-border rounded-xl overflow-hidden p-0 shadow-xl max-w-full w-[95vw] sm:w-auto max-h-[90vh] overflow-y-auto my-4">
         <div className="relative">
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="absolute right-4 top-4 z-10 rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
-          </button>
-          
-          <div className="grid md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2">
             {/* Left Column - Form */}
-            <div className="p-8 md:p-10">
-              <div className="mb-8 text-center">
-                <h2 className="text-2xl font-bold text-foreground mb-2">Start Your Project</h2>
-                <p className="text-muted-foreground text-sm">
+            <div className="p-4 sm:p-8 md:p-10">
+              <div className="mb-6 sm:mb-8 text-center">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">Start Your Project</h2>
+                <p className="text-muted-foreground text-xs sm:text-sm">
                   We'll get back to you within 24 hours
                 </p>
               </div>
@@ -250,7 +240,7 @@ const ConsultationModal: React.FC<ConsultationModalProps> = ({ isOpen, onClose, 
                   <button
                     type="submit"
                     disabled={isSubmitting || isSuccess}
-                    className="w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground font-medium py-2.5 px-6 rounded-md transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                    className="w-full bg-gradient-to-r from-primary to-primary/90 text-white font-medium py-2.5 px-6 rounded-md transition-all duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md text-base sm:text-base"
                   >
                     {isSubmitting ? (
                       <>
@@ -275,54 +265,54 @@ const ConsultationModal: React.FC<ConsultationModalProps> = ({ isOpen, onClose, 
             </div>
             
             {/* Right Column - Info */}
-            <div className="bg-gradient-to-b from-primary/90 to-primary p-8 md:p-10 flex flex-col justify-between text-primary-foreground">
+            <div className="bg-gradient-to-b from-primary/90 to-primary p-4 sm:p-8 md:p-10 flex flex-col justify-between text-white min-h-[300px]">
               <div>
                 <div className="mb-8">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <MessageSquare className="h-6 w-6 text-primary-foreground" />
+                  <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center mb-4">
+                    <MessageSquare className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-primary-foreground mb-2">What to Expect</h3>
-                  <p className="text-primary-foreground/80 text-sm">
+                  <h3 className="text-xl font-semibold text-white mb-2">What to Expect</h3>
+                  <p className="text-white/80 text-sm">
                     Our team will review your request and contact you within 24 hours to discuss your project in detail.
                   </p>
                 </div>
-                                <div className="space-y-4">
+                <div className="space-y-4">
                   <div className="flex items-start space-x-3">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-300 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h4 className="text-sm font-medium text-primary-foreground">No Obligation</h4>
-                      <p className="text-xs text-primary-foreground/80">This consultation is completely free with no strings attached.</p>
+                      <h4 className="text-sm font-medium text-white">No Obligation</h4>
+                      <p className="text-xs text-white/80">This consultation is completely free with no strings attached.</p>
                     </div>
                   </div>
                   
                   <div className="flex items-start space-x-3">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-300 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h4 className="text-sm font-medium text-primary-foreground">Expert Advice</h4>
-                      <p className="text-xs text-primary-foreground/80">Get insights from our experienced development team.</p>
+                      <h4 className="text-sm font-medium text-white">Expert Advice</h4>
+                      <p className="text-xs text-white/80">Get insights from our experienced development team.</p>
                     </div>
                   </div>
                   
                   <div className="flex items-start space-x-3">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-300 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h4 className="text-sm font-medium text-primary-foreground">Custom Solution</h4>
-                      <p className="text-xs text-primary-foreground/80">Tailored recommendations for your specific needs.</p>
+                      <h4 className="text-sm font-medium text-white">Custom Solution</h4>
+                      <p className="text-xs text-white/80">Tailored recommendations for your specific needs.</p>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-8 pt-6 border-t border-primary/20">
+              <div className="mt-8 pt-6 border-t border-white/20">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-primary-foreground/10 flex items-center justify-center">
-                      <Phone className="h-4 w-4 text-primary-foreground" />
+                    <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <Phone className="h-4 w-4 text-white" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-primary-foreground/80">Prefer to talk?</p>
-                    <a href="tel:+11234567890" className="text-sm font-medium text-primary-foreground hover:text-primary-foreground/80 transition-colors">
+                    <p className="text-xs text-white/80">Prefer to talk?</p>
+                    <a href="tel:+11234567890" className="text-sm font-medium text-white hover:text-white/80 transition-colors">
                       +1 (123) 456-7890
                     </a>
                   </div>

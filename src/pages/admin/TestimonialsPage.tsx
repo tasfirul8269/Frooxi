@@ -61,7 +61,7 @@ export default function TestimonialsPage() {
         const data = await getTestimonials()
         setTestimonials(Array.isArray(data) ? data : [])
       } catch (error) {
-        console.error('Error fetching testimonials:', error)
+        if (process.env.NODE_ENV !== 'production') console.error('Error fetching testimonials:', error)
         toast({
           title: 'Error',
           description: 'Failed to fetch testimonials',
@@ -86,7 +86,7 @@ export default function TestimonialsPage() {
           description: 'Testimonial deleted successfully',
         })
       } catch (error) {
-        console.error('Error deleting testimonial:', error)
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting testimonial:', error)
         toast({
           title: 'Error',
           description: 'Failed to delete testimonial',
@@ -108,7 +108,7 @@ export default function TestimonialsPage() {
         description: `Testimonial ${!currentStatus ? 'published' : 'unpublished'} successfully`,
       })
     } catch (error) {
-      console.error('Error toggling testimonial status:', error)
+      if (process.env.NODE_ENV !== 'production') console.error('Error toggling testimonial status:', error)
       toast({
         title: 'Error',
         description: 'Failed to update testimonial status',
@@ -129,7 +129,7 @@ export default function TestimonialsPage() {
         description: `Testimonial ${!currentFeatured ? 'featured' : 'unfeatured'} successfully`,
       })
     } catch (error) {
-      console.error('Error toggling testimonial featured status:', error)
+      if (process.env.NODE_ENV !== 'production') console.error('Error toggling testimonial featured status:', error)
       toast({
         title: 'Error',
         description: 'Failed to update testimonial featured status',
@@ -235,7 +235,7 @@ export default function TestimonialsPage() {
         order: 0
       });
     } catch (error) {
-      console.error('Error adding testimonial:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error adding testimonial:', error);
       toast({
         title: 'Error',
         description: 'Failed to add testimonial',

@@ -23,40 +23,40 @@ const TeamSection: React.FC<TeamSectionProps> = ({ sectionRef }) => {
     const fetchTeamMembers = async () => {
       try {
         setLoading(true);
-        console.log('Fetching team members...');
+        if (process.env.NODE_ENV !== 'production') console.log('Fetching team members...');
         
         // Make a test request to the API endpoint
         try {
           const testResponse = await fetch(`${import.meta.env.VITE_API_URL}/team`);
           const testData = await testResponse.json();
-          console.log('Test API Response:', testData);
+          if (process.env.NODE_ENV !== 'production') console.log('Test API Response:', testData);
           if (testData && testData.length > 0) {
-            console.log('Test - First team member:', testData[0]);
-            console.log('Test - Image URL:', testData[0].imageUrl);
+            if (process.env.NODE_ENV !== 'production') console.log('Test - First team member:', testData[0]);
+            if (process.env.NODE_ENV !== 'production') console.log('Test - Image URL:', testData[0].imageUrl);
           }
         } catch (testError) {
-          console.error('Test API Error:', testError);
+          if (process.env.NODE_ENV !== 'production') console.error('Test API Error:', testError);
         }
         
         // Original API call
         const response = await getTeamMembers();
-        console.log('API Response:', response);
+        if (process.env.NODE_ENV !== 'production') console.log('API Response:', response);
         
         if (response && response.length > 0) {
-          console.log('First team member data:', response[0]);
-          console.log('Image URL of first member:', response[0].imageUrl);
+          if (process.env.NODE_ENV !== 'production') console.log('First team member data:', response[0]);
+          if (process.env.NODE_ENV !== 'production') console.log('Image URL of first member:', response[0].imageUrl);
           
           // Log the full image URL
           const fullImageUrl = response[0].imageUrl.startsWith('http') 
             ? response[0].imageUrl 
             : `${import.meta.env.VITE_API_URL}${response[0].imageUrl}`;
-          console.log('Full image URL:', fullImageUrl);
+          if (process.env.NODE_ENV !== 'production') console.log('Full image URL:', fullImageUrl);
         }
         
         const data = Array.isArray(response) ? response : [];
         
         if (data.length === 0) {
-          console.warn('No team members found in the response');
+          if (process.env.NODE_ENV !== 'production') console.warn('No team members found in the response');
           setTeamMembers([]);
           return;
         }
@@ -66,16 +66,16 @@ const TeamSection: React.FC<TeamSectionProps> = ({ sectionRef }) => {
           .filter((member): member is TeamMember => member && member.isActive)
           .sort((a, b) => (a.order || 0) - (b.order || 0));
         
-        console.log('Active Team Members:', activeMembers);
-        console.log('Number of active members:', activeMembers.length);
+        if (process.env.NODE_ENV !== 'production') console.log('Active Team Members:', activeMembers);
+        if (process.env.NODE_ENV !== 'production') console.log('Number of active members:', activeMembers.length);
         
         if (activeMembers.length === 0) {
-          console.warn('No active team members found');
+          if (process.env.NODE_ENV !== 'production') console.warn('No active team members found');
         }
         
         setTeamMembers(activeMembers);
       } catch (err) {
-        console.error('Error fetching team members:', err);
+        if (process.env.NODE_ENV !== 'production') console.error('Error fetching team members:', err);
         setError('Failed to load team members. Please try again later.');
       } finally {
         setLoading(false);

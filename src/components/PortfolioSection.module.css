@@ -1,0 +1,18 @@
+@keyframes portfolio-scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(calc(-50% - 1.5rem)); } /* 1.5rem accounts for gap-6 */
+}
+@keyframes portfolio-scroll-reverse {
+  0% { transform: translateY(calc(-50% - 1.5rem)); }
+  100% { transform: translateY(0); }
+}
+.animate-portfolio-scroll {
+  animation: portfolio-scroll 60s linear infinite;
+}
+.animate-portfolio-scroll-reverse {
+  animation: portfolio-scroll-reverse 60s linear infinite;
+}
+.animate-portfolio-scroll:hover, 
+.animate-portfolio-scroll-reverse:hover {
+  animation-play-state: paused;
+} 

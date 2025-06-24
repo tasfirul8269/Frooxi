@@ -159,7 +159,7 @@ export default function UsersPage() {
       const data = await getUsers();
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error fetching users:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch users',
@@ -190,7 +190,7 @@ export default function UsersPage() {
         });
         fetchUsers();
       } catch (error) {
-        console.error('Error deleting user:', error);
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting user:', error);
         toast({
           title: 'Error',
           description: 'Failed to delete user',
@@ -231,7 +231,7 @@ export default function UsersPage() {
       setShowForm(false);
       fetchUsers();
     } catch (error: any) {
-      console.error('Error saving user:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error saving user:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to save user';
       toast({
         title: 'Error',

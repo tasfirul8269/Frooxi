@@ -5,8 +5,6 @@ const API_URL = import.meta.env.PROD
   ? 'https://frooxi-backend.onrender.com/api' 
   : import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-console.log('Contact Service API URL:', API_URL); // Debug log
-
 export interface ContactFormData {
   name: string;
   email: string;
@@ -31,7 +29,6 @@ const getAuthConfig = () => {
   try {
     const token = localStorage.getItem('authToken');
     if (!token) {
-      console.error('No authentication token found');
       // Redirect to login or handle missing token
       window.location.href = '/admin/login';
       throw new Error('Authentication required');
@@ -45,7 +42,6 @@ const getAuthConfig = () => {
       withCredentials: true // Important for sending cookies if using httpOnly cookies
     };
   } catch (error) {
-    console.error('Error in getAuthConfig:', error);
     throw new Error('Authentication failed');
   }
 };
@@ -93,7 +89,7 @@ export const getContactMessages = async ({
   try {
     // First verify we have a token
     if (!isAuthenticated()) {
-      console.error('User not authenticated, redirecting to login');
+      // Redirect to login
       window.location.href = '/login';
       throw new Error('Authentication required');
     }
@@ -104,8 +100,6 @@ export const getContactMessages = async ({
       ...(search && { search }),
       ...(read !== undefined && { read: read.toString() }),
     });
-
-    console.log('Fetching messages with params:', params.toString());
     
     const response = await axios.get<{ data: {
       docs: ContactMessage[];
@@ -120,19 +114,10 @@ export const getContactMessages = async ({
       getAuthConfig()
     );
     
-    console.log('Messages fetched successfully');
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching contact messages:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      headers: error.response?.headers,
-    });
-    
     // Handle 401 Unauthorized
     if (error.response?.status === 401) {
-      console.log('Authentication failed, redirecting to login');
       // Clear any invalid token
       localStorage.removeItem('authToken');
       // Redirect to login
@@ -155,7 +140,6 @@ export const getContactMessage = async (id: string) => {
     );
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching contact message:', error);
     throw error;
   }
 };
@@ -164,7 +148,6 @@ export const deleteContactMessage = async (id: string) => {
   try {
     await axios.delete(`${API_URL}/contacts/${id}`, getAuthConfig());
   } catch (error) {
-    console.error('Error deleting contact message:', error);
     throw error;
   }
 };
@@ -178,7 +161,6 @@ export const toggleReadStatus = async (id: string) => {
     );
     return response.data.data;
   } catch (error) {
-    console.error('Error toggling read status:', error);
     throw error;
   }
 };

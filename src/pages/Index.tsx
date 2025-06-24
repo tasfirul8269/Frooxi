@@ -162,7 +162,7 @@ const Index = () => {
       '  motto: "Building Digital Excellence"',
       '};',
       '',
-      'console.log(`Welcome to ${company.name}!`);',
+      'if (process.env.NODE_ENV !== \'production\') console.log(`Welcome to ${company.name}!`);',
       '// Let\'s create something amazing together!',
       ''
     ];

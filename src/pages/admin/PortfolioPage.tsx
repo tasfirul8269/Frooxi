@@ -184,7 +184,7 @@ export default function PortfolioPage() {
   // Handle form submission
   const handleFormSubmit = async (formData: any) => {
     try {
-      console.log('Form submitted with data:', formData);
+      if (process.env.NODE_ENV !== 'production') console.log('Form submitted with data:', formData);
       
       if (editingItem) {
         // For updates, we need to handle the file upload if a new image was selected
@@ -194,18 +194,18 @@ export default function PortfolioPage() {
             const uploadFormData = new FormData();
             uploadFormData.append('image', formData._file);
             
-            console.log('Uploading image...');
+            if (process.env.NODE_ENV !== 'production') console.log('Uploading image...');
             const uploadResponse = await api.post('/portfolio/upload', uploadFormData, {
               headers: {
                 'Content-Type': 'multipart/form-data',
               },
             });
             
-            console.log('Image upload response:', uploadResponse.data);
+            if (process.env.NODE_ENV !== 'production') console.log('Image upload response:', uploadResponse.data);
             // Update the data with the new image URL
             formData.image = uploadResponse.data.url;
           } catch (error) {
-            console.error('Error uploading image:', error);
+            if (process.env.NODE_ENV !== 'production') console.error('Error uploading image:', error);
             toast({
               title: 'Error',
               description: 'Failed to upload image. Please try again.',
@@ -217,7 +217,7 @@ export default function PortfolioPage() {
         
         // Prepare the update data
         const { _file, ...updateData } = formData;
-        console.log('Updating portfolio item with data:', updateData);
+        if (process.env.NODE_ENV !== 'production') console.log('Updating portfolio item with data:', updateData);
         
         updatePortfolioMutation.mutate({ 
           id: editingItem._id, 
@@ -225,11 +225,11 @@ export default function PortfolioPage() {
         });
       } else {
         // For new items, the file upload is handled in the createPortfolioItem function
-        console.log('Creating new portfolio item with data:', formData);
+        if (process.env.NODE_ENV !== 'production') console.log('Creating new portfolio item with data:', formData);
         createPortfolioMutation.mutate(formData);
       }
     } catch (error) {
-      console.error('Error in form submission:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error in form submission:', error);
       let errorMessage = 'An error occurred while saving the portfolio item.';
       
       if (error.response?.data?.message) {

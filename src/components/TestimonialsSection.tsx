@@ -40,7 +40,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ sectionRef })
           .sort((a: TestimonialItem, b: TestimonialItem) => a.order - b.order);
         setTestimonials(activeTestimonials);
       } catch (err) {
-        console.error('Error fetching testimonials:', err);
+        if (process.env.NODE_ENV !== 'production') console.error('Error fetching testimonials:', err);
         setError('Failed to load testimonials. Please try again later.');
       } finally {
         setLoading(false);

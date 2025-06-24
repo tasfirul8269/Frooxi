@@ -150,7 +150,7 @@ const SubscriptionSection: React.FC = () => {
         
         setPlans(validatedPlans);
       } catch (err) {
-        console.error('Failed to fetch subscription plans:', err);
+        if (process.env.NODE_ENV !== 'production') console.error('Failed to fetch subscription plans:', err);
         setError('Failed to load subscription plans. Please try again later.');
       } finally {
         setLoading(false);
@@ -211,7 +211,7 @@ const SubscriptionSection: React.FC = () => {
         setCheckoutSuccess(false);
       }, 2000);
     } catch (err) {
-      console.error('Checkout failed:', err);
+      if (process.env.NODE_ENV !== 'production') console.error('Checkout failed:', err);
       setCheckoutError('Failed to process your subscription. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -257,7 +257,7 @@ const SubscriptionSection: React.FC = () => {
   // Loading state with skeleton loader
   if (loading) {
     return (
-      <section id="pricing" className="relative py-20 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
+      <section id="subscription" className="relative py-20 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
         {/* Premium Background with Animated Elements */}
         <div className="absolute inset-0 overflow-hidden -z-10">
           {/* Base Gradient */}
@@ -589,7 +589,7 @@ const SubscriptionSection: React.FC = () => {
   // Main return with new design
   return (
     <section
-      id="pricing"
+      id="subscription"
       className="relative min-h-screen py-20 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 via-indigo-100 to-purple-100 dark:from-[#0a0714] dark:via-[#18122B] dark:to-[#0a0714]"
     >
       {/* Enhanced, visually interesting background */}

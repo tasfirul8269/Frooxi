@@ -3,14 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { SectionHeading } from '@/components/section-heading';
 import { Button } from '@/components/ui/button';
-
-// Add type declarations for styled-jsx
-declare module 'react' {
-  interface StyleHTMLAttributes<T> extends React.HTMLAttributes<T> {
-    jsx?: boolean;
-    global?: boolean;
-  }
-}
+import styles from './PortfolioSection.module.css';
 import { portfolioAPI } from '@/services/api';
 import { cn } from '@/lib/utils';
 
@@ -240,22 +233,23 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 to-transparent dark:from-slate-900 z-20 pointer-events-none"></div>
             
             {columnItems.map((items, colIndex) => {
-              const isReversed = colIndex % 2 === 1; // Reverse direction for even columns (1-based index)
-              const animationDuration = 60 + (colIndex * 5); // Different speed for each column
-              
+              // 1st and 3rd columns: top-to-bottom, 2nd column: bottom-to-top
+              const isReverse = colIndex === 1;
+              const animationDuration = 60 + (colIndex * 5);
+              // Always duplicate items for seamless scroll, even if few
+              const duplicatedItems = getDuplicatedItems(items.length < 3 ? [...items, ...items, ...items] : items);
               return (
                 <div 
                   key={colIndex} 
                   className={cn(
                     "relative h-full overflow-hidden",
-                    isReversed ? "origin-top" : "origin-bottom"
+                    isReverse ? "origin-top" : "origin-bottom"
                   )}
                 >
                   <div 
                     className={cn(
                       "space-y-6 w-full opacity-90 hover:opacity-100 transition-opacity duration-300",
-                      "animate-portfolio-scroll",
-                      isReversed ? "animate-portfolio-scroll-reverse" : ""
+                      isReverse ? styles['animate-portfolio-scroll-reverse'] : styles['animate-portfolio-scroll']
                     )}
                     style={{
                       animationDuration: `${animationDuration}s`,
@@ -266,7 +260,7 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                   >
-                    {getDuplicatedItems(items).map((item, itemIndex) => (
+                    {duplicatedItems.map((item, itemIndex) => (
                       <PortfolioCard 
                         key={`${item._id || item.title}-${itemIndex}`} 
                         item={item} 
@@ -293,28 +287,6 @@ const PortfolioSection: React.FC<PortfolioSectionProps> = ({ portfolioItemsData:
           </div>
         </div>
       </div>
-
-      {/* Add global styles for the animation */}
-      <style jsx={true} global={true}>{`
-        @keyframes portfolio-scroll {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(calc(-50% - 1.5rem)); } /* 1.5rem accounts for gap-6 */
-        }
-        @keyframes portfolio-scroll-reverse {
-          0% { transform: translateY(calc(-50% - 1.5rem)); }
-          100% { transform: translateY(0); }
-        }
-        .animate-portfolio-scroll {
-          animation: portfolio-scroll 60s linear infinite;
-        }
-        .animate-portfolio-scroll-reverse {
-          animation: portfolio-scroll-reverse 60s linear infinite;
-        }
-        .animate-portfolio-scroll:hover, 
-        .animate-portfolio-scroll-reverse:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </section>
   );
 };

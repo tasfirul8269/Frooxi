@@ -93,7 +93,7 @@ export function PortfolioItemForm({ item, onSave, onCancel, isLoading = false }:
       //   variant: "default",
       // });
     } catch (error) {
-      console.error('Error handling image:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error handling image:', error);
       // toast({
       //   title: "Error",
       //   description: "Failed to process image. Please try again.",
@@ -166,11 +166,11 @@ export function PortfolioItemForm({ item, onSave, onCancel, isLoading = false }:
         _file: formData._file // Include the file for upload
       };
       
-      console.log('Submitting form data:', dataToSave);
+      if (process.env.NODE_ENV !== 'production') console.log('Submitting form data:', dataToSave);
       await onSave(dataToSave as any); // Type assertion needed due to _file property
       
     } catch (error) {
-      console.error('Error in form submission:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error in form submission:', error);
       // Show error toast
       toast({
         title: 'Error',

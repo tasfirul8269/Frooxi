@@ -77,7 +77,7 @@ export default function ConsultationsPage() {
       setIsUpdatingStatus(false);
     },
     onError: (error) => {
-      console.error('Error updating status:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error updating status:', error);
       toast.error('Failed to update status');
       setIsUpdatingStatus(false);
     }
@@ -93,7 +93,7 @@ export default function ConsultationsPage() {
       toast.success('Note added successfully');
     },
     onError: (error) => {
-      console.error('Error adding note:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error adding note:', error);
       toast.error('Failed to add note');
     }
   });

@@ -23,7 +23,7 @@ const Team: React.FC = () => {
           .sort((a: TeamMember, b: TeamMember) => (a.order || 0) - (b.order || 0));
         setTeamMembers(activeMembers);
       } catch (err: any) {
-        console.error('Error fetching team members:', err);
+        if (process.env.NODE_ENV !== 'production') console.error('Error fetching team members:', err);
         setError('Failed to load team members. Please try again later.');
       } finally {
         setLoading(false);
@@ -159,7 +159,7 @@ const Team: React.FC = () => {
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8"
         >
           {teamMembers.map((member) => (
             <motion.div 
